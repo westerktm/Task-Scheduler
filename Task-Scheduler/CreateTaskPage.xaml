@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Task_Scheduler.CreateTaskPage"
+             Title="Создать задачу">
+
+    <ScrollView>
+        <Grid Padding="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+          
+            <Entry x:Name="TaskTitleEntry"
+                   Placeholder="Название задачи"
+                   Grid.Row="1"
+                   Margin="0,0,0,15" />
+
+            <!-- Описание задачи -->
+            <Editor x:Name="TaskDescriptionEditor"
+                    Grid.Row="2"
+                    Placeholder="Описание задачи"
+                    AutoSize="TextChanges"
+                    Margin="0,0,0,15" />
+
+            <Label Text="Тип времени выполнения:"
+                   FontSize="16"
+                   Grid.Row="3"
+                   Margin="0,0,0,5" />
+
+            <Picker x:Name="TimeTypePicker"
+                    Grid.Row="4"
+                    Margin="0,0,0,15"
+                    SelectedIndexChanged="OnTimeTypeChanged">
+                <Picker.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>Одна дата и время</x:String>
+                        <x:String>Диапазон (от - до)</x:String>
+                    </x:Array>
+                </Picker.ItemsSource>
+            </Picker>
+
+            <!-- Простой режим: одна дата и время -->
+            <Label x:Name="SimpleDateLabel"
+                   Text="Дата выполнения:"
+                   FontSize="16"
+                   Grid.Row="5"
+                   Margin="0,0,0,5"
+                   IsVisible="True" />
+
+            <DatePicker x:Name="TaskDatePicker"
+                        Grid.Row="6"
+                        Margin="0,0,0,15"
+                        IsVisible="True" />
+
+            <Label x:Name="SimpleTimeLabel"
+                   Text="Время выполнения:"
+                   FontSize="16"
+                   Grid.Row="7"
+                   Margin="0,0,0,5"
+                   IsVisible="True" />
+
+            <TimePicker x:Name="TaskTimePicker"
+                        Grid.Row="8"
+                        Margin="0,0,0,15"
+                        IsVisible="True"
+                        Format="HH:mm" />
+
+            <!-- Режим диапазона: от и до -->
+            <Label x:Name="RangeFromDateLabel"
+                   Text="Дата начала:"
+                   FontSize="16"
+                   Grid.Row="5"
+                   Margin="0,0,0,5"
+                   IsVisible="False" />
+
+            <DatePicker x:Name="TaskDateFromPicker"
+                        Grid.Row="6"
+                        Margin="0,0,0,15"
+                        IsVisible="False" />
+
+            <Label x:Name="RangeFromTimeLabel"
+                   Text="Время начала:"
+                   FontSize="16"
+                   Grid.Row="7"
+                   Margin="0,0,0,5"
+                   IsVisible="False" />
+
+            <TimePicker x:Name="TaskTimeFromPicker"
+                        Grid.Row="8"
+                        Margin="0,0,0,15"
+                        IsVisible="False"
+                        Format="HH:mm" />
+
+            <Label x:Name="RangeToDateLabel"
+                   Text="Дата окончания:"
+                   FontSize="16"
+                   Grid.Row="9"
+                   Margin="0,0,0,5"
+                   IsVisible="False" />
+
+            <DatePicker x:Name="TaskDateToPicker"
+                        Grid.Row="10"
+                        Margin="0,0,0,15"
+                        IsVisible="False" />
+
+            <Label x:Name="RangeToTimeLabel"
+                   Text="Время окончания:"
+                   FontSize="16"
+                   Grid.Row="11"
+                   Margin="0,0,0,5"
+                   IsVisible="False" />
+
+            <TimePicker x:Name="TaskTimeToPicker"
+                        Grid.Row="12"
+                        Margin="0,0,0,15"
+                        IsVisible="False"
+                        Format="HH:mm" />
+
+            <StackLayout x:Name="SubTasksStackLayout" Grid.Row="13" Margin="0,0,0,15">
+                <Label Text="Подзадачи:"
+                       FontSize="16"
+                       Margin="0,0,0,10" />
+
+                <ScrollView HeightRequest="100">
+                    <StackLayout x:Name="SubTasksContainer" />
+                </ScrollView>
+
+                <Button Text="+ Добавить подзадачу"
+                        Clicked="OnAddSubTaskClicked"
+                        BackgroundColor="#E0E0E0"
+                        TextColor="#333333"
+                        CornerRadius="8"
+                        Padding="15,8"
+                        Margin="500,10,500,10" />
+            </StackLayout>
+
+            <Button Text="Сохранить"
+                    Clicked="OnSaveButtonClicked"
+                    Grid.Row="14"
+                    BackgroundColor="#512BD4"
+                    TextColor="White"
+                    CornerRadius="8"
+                    Padding="20,10"
+                    Margin="500,100,500,0" />
+
+        </Grid>
+    </ScrollView>
+</ContentPage>
