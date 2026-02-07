@@ -13,6 +13,12 @@ namespace Task_Scheduler
             InitializeComponent();
             _editingTask = task;
 
+            // Устанавливаем минимальную дату на сегодня для всех DatePicker
+            DateTime today = DateTime.Today;
+            TaskDatePicker.MinimumDate = today;
+            TaskDateFromPicker.MinimumDate = today;
+            TaskDateToPicker.MinimumDate = today;
+
             // Устанавливаем начальный режим
             TimeTypePicker.SelectedIndex = 0;
             OnTimeTypeChanged(null, null);
@@ -178,6 +184,8 @@ namespace Task_Scheduler
             bool isRangeMode = TimeTypePicker.SelectedIndex == 1;
             task.IsDateRange = isRangeMode;
 
+            DateTime now = DateTime.Now;
+
             if (isRangeMode)
             {
                 // Режим диапазона
@@ -203,6 +211,40 @@ namespace Task_Scheduler
                 {
                     task.DueTimeTo = TaskTimeToPicker.Time;
                 }
+
+                // Проверка даты начала
+                if (task.DueDateFrom.HasValue)
+                {
+                    DateTime startDateTime = task.DueDateFrom.Value.Date + (task.DueTimeFrom ?? TimeSpan.Zero);
+                    // Проверяем только если это новая задача или дата была изменена
+                    bool dateChanged = _editingTask == null || 
+                        !_editingTask.DueDateFrom.HasValue || 
+                        _editingTask.DueDateFrom.Value != task.DueDateFrom.Value ||
+                        _editingTask.DueTimeFrom != task.DueTimeFrom;
+                    
+                    if (dateChanged && startDateTime < now)
+                    {
+                        await DisplayAlert("Ошибка", "Дата и время начала не могут быть в прошлом", "OK");
+                        return;
+                    }
+                }
+
+                // Проверка даты окончания
+                if (task.DueDateTo.HasValue)
+                {
+                    DateTime endDateTime = task.DueDateTo.Value.Date + (task.DueTimeTo ?? TimeSpan.Zero);
+                    // Проверяем только если это новая задача или дата была изменена
+                    bool dateChanged = _editingTask == null || 
+                        !_editingTask.DueDateTo.HasValue || 
+                        _editingTask.DueDateTo.Value != task.DueDateTo.Value ||
+                        _editingTask.DueTimeTo != task.DueTimeTo;
+                    
+                    if (dateChanged && endDateTime < now)
+                    {
+                        await DisplayAlert("Ошибка", "Дата и время окончания не могут быть в прошлом", "OK");
+                        return;
+                    }
+                }
             }
             else
             {
@@ -221,12 +263,30 @@ namespace Task_Scheduler
                 {
                     task.DueTime = TaskTimePicker.Time;
                 }
+
+                // Проверка даты выполнения
+                if (task.DueDate.HasValue)
+                {
+                    DateTime dueDateTime = task.DueDate.Value.Date + (task.DueTime ?? TimeSpan.Zero);
+                    // Проверяем только если это новая задача или дата была изменена
+                    bool dateChanged = _editingTask == null || 
+                        !_editingTask.DueDate.HasValue || 
+                        _editingTask.DueDate.Value != task.DueDate.Value ||
+                        _editingTask.DueTime != task.DueTime;
+                    
+                    if (dateChanged && dueDateTime < now)
+                    {
+                        await DisplayAlert("Ошибка", "Дата и время выполнения не могут быть в прошлом", "OK");
+                        return;
+                    }
+                }
             }
 
-            // Сбрасываем флаг уведомления при создании или при изменении даты/времени
+            // Сбрасываем флаги уведомления при создании или при изменении даты/времени
             if (_editingTask == null)
             {
                 task.DueNotificationSent = false;
+                task.NotificationDismissed = false; // Сбрасываем флаг удаления для новой задачи
                 TaskService.Instance.AddTask(task);
             }
             else
@@ -236,6 +296,7 @@ namespace Task_Scheduler
                 if (oldDue != newDue)
                 {
                     task.DueNotificationSent = false;
+                    task.NotificationDismissed = false; // Сбрасываем флаг удаления при изменении даты/времени
                 }
                 TaskService.Instance.UpdateTask(task);
             }

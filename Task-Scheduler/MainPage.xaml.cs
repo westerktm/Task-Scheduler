@@ -7,7 +7,9 @@ namespace Task_Scheduler
     {
         private bool _isMenuOpen = false;
         private bool _isSettingsOpen = false;
+        private bool _isNotificationsOpen = false;
         private bool _showFavoritesOnly = false;
+        private bool _isTodayMode = false;
         private string _currentSortOption = "Custom order";
 
         public MainPage()
@@ -25,6 +27,9 @@ namespace Task_Scheduler
             {
                 ThemeSwitch.IsToggled = currentTheme == AppTheme.Dark;
             }
+
+            // Инициализируем иконку уведомлений
+            UpdateNotificationIcon();
         }
 
         private void OnAvatarClicked(object sender, EventArgs e)
@@ -33,9 +38,267 @@ namespace Task_Scheduler
             // Здесь можно добавить логику, например, открыть меню профиля
         }
 
+        private async void OnNotificationsClicked(object sender, EventArgs e)
+        {
+            _isNotificationsOpen = !_isNotificationsOpen;
+            
+            // Закрываем панель настроек при открытии уведомлений
+            if (_isNotificationsOpen)
+            {
+                _isSettingsOpen = false;
+                SettingsPanel.IsVisible = false;
+                
+                // Делаем overlay интерактивным, чтобы клики попадали в панель
+                NotificationsOverlay.InputTransparent = false;
+                
+                // Показываем панель и запускаем анимацию появления
+                NotificationsPanel.IsVisible = true;
+                NotificationsPanel.TranslationY = -500; // Начальная позиция (выше экрана)
+                NotificationsPanel.Opacity = 0;
+                
+                RefreshNotifications();
+                
+                // Анимация плавного вытягивания вниз
+                await Task.WhenAll(
+                    NotificationsPanel.TranslateTo(0, 0, 300, Easing.CubicOut),
+                    NotificationsPanel.FadeTo(1, 300)
+                );
+            }
+            else
+            {
+                // Анимация закрытия (убирание вверх)
+                await Task.WhenAll(
+                    NotificationsPanel.TranslateTo(0, -500, 250, Easing.CubicIn),
+                    NotificationsPanel.FadeTo(0, 250)
+                );
+                
+                NotificationsPanel.IsVisible = false;
+                NotificationsPanel.TranslationY = 0; // Сбрасываем позицию
+                
+                // Возвращаем overlay в прозрачный режим, чтобы не блокировать клики по основному контенту
+                NotificationsOverlay.InputTransparent = true;
+                
+                // Обновляем иконку при закрытии панели
+                UpdateNotificationIcon();
+            }
+        }
+
+        private void OnNotificationsOverlayTapped(object sender, EventArgs e)
+        {
+            // Закрываем панель при клике вне её
+            if (_isNotificationsOpen)
+            {
+                OnNotificationsClicked(sender, e);
+            }
+        }
+
+        private void RefreshNotifications()
+        {
+            NotificationsContainer.Children.Clear();
+            
+            // Показываем только задачи, для которых было отправлено уведомление и которые не были удалены пользователем
+            var tasks = TaskService.Instance.GetTasks()
+                .Where(t => t.DueNotificationSent && !t.IsCompleted && !t.NotificationDismissed)
+                .ToList();
+
+            var now = DateTime.Now;
+            var notificationTasks = new List<(TaskItem task, DateTime dueDate, string status)>();
+
+            foreach (var task in tasks)
+            {
+                DateTime? dueDateTime = GetTaskDueDateTime(task);
+                if (dueDateTime.HasValue)
+                {
+                    var timeUntilDue = dueDateTime.Value - now;
+                    string status = timeUntilDue < TimeSpan.Zero ? "Текущая задача" : "Скоро";
+                    notificationTasks.Add((task, dueDateTime.Value, status));
+                }
+            }
+
+            // Сортируем: сначала просроченные, потом по дате
+            notificationTasks = notificationTasks
+                .OrderByDescending(t => t.status == "Текущая задача")
+                .ThenBy(t => t.dueDate)
+                .ToList();
+
+            if (notificationTasks.Count == 0)
+            {
+                var noNotificationsLabel = new Label
+                {
+                    Text = "Нет активных уведомлений",
+                    FontSize = 14,
+                    TextColor = Colors.Gray,
+                    HorizontalOptions = LayoutOptions.Center,
+                    Margin = new Thickness(0, 20, 0, 0)
+                };
+                NotificationsContainer.Children.Add(noNotificationsLabel);
+                UpdateNotificationIcon();
+                return;
+            }
+
+            // Добавляем кнопку "Очистить все" если есть уведомления
+            var clearAllButton = new Button
+            {
+                Text = "Очистить все",
+                BackgroundColor = Color.FromArgb("#FF5252"),
+                TextColor = Colors.White,
+                CornerRadius = 8,
+                Padding = new Thickness(10, 8),
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+            clearAllButton.Clicked += async (s, e) =>
+            {
+                bool confirm = await DisplayAlert(
+                    "Очистить все уведомления",
+                    "Вы уверены, что хотите удалить все уведомления?",
+                    "Да",
+                    "Нет");
+                
+                if (confirm)
+                {
+                    foreach (var (task, _, _) in notificationTasks)
+                    {
+                        // Устанавливаем флаг, что пользователь явно удалил уведомление
+                        task.NotificationDismissed = true;
+                        task.DueNotificationSent = false;
+                        TaskService.Instance.UpdateTask(task);
+                    }
+                    RefreshNotifications();
+                }
+            };
+            NotificationsContainer.Children.Add(clearAllButton);
+
+            foreach (var (task, dueDate, status) in notificationTasks)
+            {
+                var notificationFrame = CreateNotificationFrame(task, dueDate, status);
+                NotificationsContainer.Children.Add(notificationFrame);
+            }
+
+            UpdateNotificationIcon();
+        }
+
+        private static DateTime? GetTaskDueDateTime(TaskItem task)
+        {
+            if (task.IsDateRange && task.DueDateFrom.HasValue)
+            {
+                return task.DueDateFrom.Value.Date + (task.DueTimeFrom ?? TimeSpan.Zero);
+            }
+            if (!task.IsDateRange && task.DueDate.HasValue)
+            {
+                return task.DueDate.Value.Date + (task.DueTime ?? TimeSpan.Zero);
+            }
+            return null;
+        }
+
+        private Frame CreateNotificationFrame(TaskItem task, DateTime dueDate, string status)
+        {
+            var frame = new Frame
+            {
+                BackgroundColor = status == "Текущая задача" ? Color.FromArgb("#E3F2FD") : Color.FromArgb("#E3F2FD"),
+                BorderColor = status == "Текущая задача" ? Colors.Blue : Colors.Blue,
+                CornerRadius = 8,
+                Padding = 12,
+                Margin = new Thickness(0, 0, 0, 8),
+                HasShadow = true
+            };
+
+            var mainLayout = new StackLayout { Spacing = 6 };
+
+            // Верхняя часть с заголовком и кнопкой удаления
+            var headerLayout = new Grid
+            {
+                ColumnDefinitions =
+                {
+                    new ColumnDefinition { Width = GridLength.Star },
+                    new ColumnDefinition { Width = GridLength.Auto }
+                }
+            };
+
+            // Заголовок задачи
+            var titleLabel = new Label
+            {
+                Text = task.Title,
+                FontSize = 16,
+                FontAttributes = FontAttributes.Bold,
+                TextColor = Colors.Black
+            };
+            Grid.SetColumn(titleLabel, 0);
+            headerLayout.Children.Add(titleLabel);
+
+            // Кнопка удаления уведомления
+            var deleteButton = new Button
+            {
+                Text = "✕",
+                BackgroundColor = Colors.Transparent,
+                TextColor = Colors.Gray,
+                FontSize = 18,
+                WidthRequest = 30,
+                HeightRequest = 30,
+                Padding = 0,
+                CornerRadius = 15
+            };
+            deleteButton.Clicked += (s, e) =>
+            {
+                // Устанавливаем флаг, что пользователь явно удалил уведомление
+                task.NotificationDismissed = true;
+                task.DueNotificationSent = false;
+                TaskService.Instance.UpdateTask(task);
+                RefreshNotifications();
+            };
+            Grid.SetColumn(deleteButton, 1);
+            headerLayout.Children.Add(deleteButton);
+
+            mainLayout.Children.Add(headerLayout);
+
+            // Статус и дата
+            var statusLabel = new Label
+            {
+                Text = $"{status} • {dueDate:dd.MM.yyyy HH:mm}",
+                FontSize = 12,
+                TextColor = status == "Текущая задача" ? Colors.Black : Colors.Black
+            };
+            mainLayout.Children.Add(statusLabel);
+
+            // Описание (если есть)
+            if (!string.IsNullOrWhiteSpace(task.Description))
+            {
+                var descriptionLabel = new Label
+                {
+                    Text = task.Description,
+                    FontSize = 12,
+                    TextColor = Colors.Gray,
+                    LineBreakMode = LineBreakMode.WordWrap,
+                    MaxLines = 2
+                };
+                mainLayout.Children.Add(descriptionLabel);
+            }
+
+            frame.Content = mainLayout;
+            return frame;
+        }
+
+        private void UpdateNotificationIcon()
+        {
+            // Проверяем наличие непрочитанных уведомлений (не удаленных пользователем)
+            var hasUnreadNotifications = TaskService.Instance.GetTasks()
+                .Any(t => t.DueNotificationSent && !t.IsCompleted && !t.NotificationDismissed);
+
+            // Меняем иконку в зависимости от наличия непрочитанных уведомлений
+            NotificationsImageButton.Source = hasUnreadNotifications ? "notificationsalert.png" : "notifications.png";
+        }
+
         private void OnFavoritesClicked(object sender, EventArgs e)
         {
             _showFavoritesOnly = !_showFavoritesOnly;
+            _isTodayMode = false; // Сбрасываем режим "только сегодня" при переключении избранного
+            RefreshTasks();
+        }
+
+        private void OnTasksLabelClicked(object sender, EventArgs e)
+        {
+            // Сбрасываем фильтры и возвращаемся к изначальному списку задач
+            _showFavoritesOnly = false;
+            _isTodayMode = false;
             RefreshTasks();
         }
 
@@ -43,6 +306,13 @@ namespace Task_Scheduler
         {
             _isSettingsOpen = !_isSettingsOpen;
             SettingsPanel.IsVisible = _isSettingsOpen;
+            
+            // Закрываем панель уведомлений при открытии настроек
+            if (_isSettingsOpen)
+            {
+                _isNotificationsOpen = false;
+                NotificationsPanel.IsVisible = false;
+            }
         }
 
         private void OnThemeSwitchToggled(object sender, ToggledEventArgs e)
@@ -95,6 +365,9 @@ namespace Task_Scheduler
 
         private void OnRefreshClicked(object sender, EventArgs e)
         {
+            // Сбрасываем фильтры и возвращаемся к изначальному списку задач
+            _showFavoritesOnly = false;
+            _isTodayMode = false;
             RefreshTasks();
         }
 
@@ -143,6 +416,7 @@ namespace Task_Scheduler
 
         private void SortTasksForToday()
         {
+            _isTodayMode = true;
             var tasks = TaskService.Instance.GetTasks();
             var today = DateTime.Today;
 
@@ -250,6 +524,9 @@ namespace Task_Scheduler
         {
             base.OnAppearing();
             
+            // Подписываемся на событие отправки уведомления (для обновления иконки)
+            TaskNotificationScheduler.NotificationSent += OnNotificationSent;
+            
             // Сбрасываем состояние кнопки при возврате на страницу
             if (CreateTaskButton != null)
             {
@@ -259,11 +536,70 @@ namespace Task_Scheduler
 
             // Обновляем список задач
             RefreshTasks();
+            
+            // Обновляем иконку уведомлений
+            UpdateNotificationIcon();
+            
+            // Обновляем уведомления, если панель открыта
+            if (_isNotificationsOpen)
+            {
+                RefreshNotifications();
+            }
+        }
+
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+            
+            // Отписываемся от событий
+            TaskNotificationScheduler.NotificationSent -= OnNotificationSent;
+        }
+
+        private void OnNotificationSent(object? sender, EventArgs e)
+        {
+            UpdateNotificationIcon();
         }
 
         private void RefreshTasks()
         {
             var tasks = TaskService.Instance.GetTasks();
+
+            // Обновляем иконку уведомлений
+            UpdateNotificationIcon();
+
+            // Если включен режим "только сегодня", фильтруем задачи
+            if (_isTodayMode)
+            {
+                var today = DateTime.Today;
+                tasks = tasks.Where(task =>
+                {
+                    if (task.IsDateRange)
+                    {
+                        // Для диапазона проверяем, попадает ли сегодня в диапазон
+                        if (task.DueDateFrom.HasValue && task.DueDateTo.HasValue)
+                        {
+                            return task.DueDateFrom.Value.Date <= today && task.DueDateTo.Value.Date >= today;
+                        }
+                        else if (task.DueDateFrom.HasValue)
+                        {
+                            return task.DueDateFrom.Value.Date == today;
+                        }
+                        else if (task.DueDateTo.HasValue)
+                        {
+                            return task.DueDateTo.Value.Date == today;
+                        }
+                    }
+                    else
+                    {
+                        // Для простого режима проверяем дату
+                        if (task.DueDate.HasValue)
+                        {
+                            return task.DueDate.Value.Date == today;
+                        }
+                    }
+                    return false;
+                }).ToList();
+            }
 
             if (_showFavoritesOnly)
             {
@@ -274,10 +610,21 @@ namespace Task_Scheduler
 
             if (tasks.Count == 0)
             {
-                NoTasksLabel.Text = _showFavoritesOnly ? "В избранном нет задач" : "Похоже, у вас нет задач :(";
+                if (_isTodayMode)
+                {
+                    NoTasksLabel.Text = "На сегодня задач нет";
+                }
+                else if (_showFavoritesOnly)
+                {
+                    NoTasksLabel.Text = "В избранном нет задач";
+                }
+                else
+                {
+                    NoTasksLabel.Text = "Похоже, у вас нет задач :(";
+                }
                 NoTasksLabel.IsVisible = true;
                 CreateTaskButton.Text = "+ Создать задачу";
-                CreateTaskButton.IsVisible = !_showFavoritesOnly;
+                CreateTaskButton.IsVisible = !_showFavoritesOnly && !_isTodayMode;
                 PlusImageButton.IsVisible = false;
                 return;
             }

@@ -16,6 +16,7 @@ namespace Task_Scheduler.Models
         public bool IsFavorite { get; set; } = false;
         public bool IsCompleted { get; set; } = false;
         public bool DueNotificationSent { get; set; } = false;
+        public bool NotificationDismissed { get; set; } = false; // true если пользователь явно удалил уведомление
         public List<SubTask> SubTasks { get; set; } = new List<SubTask>();
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime LastUpdated { get; set; } = DateTime.Now;

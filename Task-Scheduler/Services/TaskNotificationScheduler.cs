@@ -12,6 +12,11 @@ namespace Task_Scheduler.Services
         private static TaskNotificationScheduler? _instance;
         private static readonly object _lock = new();
 
+        /// <summary>
+        /// Вызывается при отправке уведомления о задаче.
+        /// </summary>
+        public static event EventHandler? NotificationSent;
+
         private readonly INotificationService _notificationService;
         private readonly TaskService _taskService;
         private System.Threading.Timer? _timer;
@@ -57,7 +62,11 @@ namespace Task_Scheduler.Services
 
                 foreach (var task in tasks)
                 {
-                    if (task.DueNotificationSent) continue;
+                    // Пропускаем выполненные задачи
+                    if (task.IsCompleted) continue;
+                    
+                    // Пропускаем задачи, для которых уже отправлено уведомление или пользователь удалил уведомление
+                    if (task.DueNotificationSent || task.NotificationDismissed) continue;
 
                     DateTime? dueDateTime = GetDueDateTime(task);
                     if (dueDateTime.HasValue && now >= dueDateTime.Value)
@@ -68,6 +77,10 @@ namespace Task_Scheduler.Services
 
                         task.DueNotificationSent = true;
                         _taskService.UpdateTask(task);
+
+                        // Уведомляем об изменении, чтобы иконка обновилась сразу (в UI-потоке)
+                        Microsoft.Maui.Controls.Application.Current?.Dispatcher.Dispatch(() =>
+                            NotificationSent?.Invoke(this, EventArgs.Empty));
                     }
                 }
             }
