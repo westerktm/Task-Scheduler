@@ -11,6 +11,9 @@ namespace Task_Scheduler
         private bool _showFavoritesOnly = false;
         private bool _isTodayMode = false;
         private string _currentSortOption = "Custom order";
+        private string _displayMode = "List"; // List, Kanban, Calendar, Gantt
+        private System.Threading.CancellationTokenSource? _pomodoroCts;
+        private string? _activePomodoroTaskId;
 
         public MainPage()
         {
@@ -96,9 +99,9 @@ namespace Task_Scheduler
         {
             NotificationsContainer.Children.Clear();
             
-            // Показываем только задачи, для которых было отправлено уведомление и которые не были удалены пользователем
+            // Показываем задачи, для которых пришло уведомление (напоминание или дедлайн) и которые не были удалены
             var tasks = TaskService.Instance.GetTasks()
-                .Where(t => t.DueNotificationSent && !t.IsCompleted && !t.NotificationDismissed)
+                .Where(t => (t.DueNotificationSent || t.ReminderNotificationSent) && !t.IsCompleted && !t.NotificationDismissed)
                 .ToList();
 
             var now = DateTime.Now;
@@ -161,6 +164,7 @@ namespace Task_Scheduler
                         // Устанавливаем флаг, что пользователь явно удалил уведомление
                         task.NotificationDismissed = true;
                         task.DueNotificationSent = false;
+                        task.ReminderNotificationSent = false;
                         TaskService.Instance.UpdateTask(task);
                     }
                     RefreshNotifications();
@@ -279,11 +283,10 @@ namespace Task_Scheduler
 
         private void UpdateNotificationIcon()
         {
-            // Проверяем наличие непрочитанных уведомлений (не удаленных пользователем)
+            // Проверяем наличие непрочитанных уведомлений (напоминание или дедлайн, не удаленных пользователем)
             var hasUnreadNotifications = TaskService.Instance.GetTasks()
-                .Any(t => t.DueNotificationSent && !t.IsCompleted && !t.NotificationDismissed);
+                .Any(t => (t.DueNotificationSent || t.ReminderNotificationSent) && !t.IsCompleted && !t.NotificationDismissed);
 
-            // Меняем иконку в зависимости от наличия непрочитанных уведомлений
             NotificationsImageButton.Source = hasUnreadNotifications ? "notificationsalert.png" : "notifications.png";
         }
 
@@ -315,12 +318,10 @@ namespace Task_Scheduler
             }
         }
 
-        private void OnThemeSwitchToggled(object sender, ToggledEventArgs e)
-        {
+        private void OnThemeSwitchToggled(object sender, ToggledEventArgs e) =>
             // true  -> тёмная тема
             // false -> светлая тема
             Application.Current.UserAppTheme = e.Value ? AppTheme.Dark : AppTheme.Light;
-        }
 
         private async void OnMenuClicked(object sender, EventArgs e)
         {
@@ -358,10 +359,7 @@ namespace Task_Scheduler
             _isMenuOpen = false;
         }
 
-        private async void OnMenuOverlayTapped(object sender, EventArgs e)
-        {
-            await CloseMenu();
-        }
+        private async void OnMenuOverlayTapped(object sender, EventArgs e) => await CloseMenu();
 
         private void OnRefreshClicked(object sender, EventArgs e)
         {
@@ -371,10 +369,7 @@ namespace Task_Scheduler
             RefreshTasks();
         }
 
-        private void OnSortClicked(object sender, EventArgs e)
-        {
-            SortTasksForToday();
-        }
+        private async void OnSortClicked(object sender, EventArgs e) => await ShowSortMenu();
 
         private async void OnMenuMenuItemTapped(object sender, EventArgs e)
         {
@@ -411,7 +406,35 @@ namespace Task_Scheduler
                 stackLayout.BackgroundColor = Colors.Transparent;
             }
             await CloseMenu();
-            SortTasksForToday();
+            await ShowSortMenu();
+        }
+
+        private async void OnDisplayListTapped(object sender, EventArgs e)
+        {
+            _displayMode = "List";
+            await CloseMenu();
+            RefreshTasks();
+        }
+
+        private async void OnDisplayKanbanTapped(object sender, EventArgs e)
+        {
+            _displayMode = "Kanban";
+            await CloseMenu();
+            RefreshTasks();
+        }
+
+        private async void OnDisplayCalendarTapped(object sender, EventArgs e)
+        {
+            _displayMode = "Calendar";
+            await CloseMenu();
+            RefreshTasks();
+        }
+
+        private async void OnDisplayGanttTapped(object sender, EventArgs e)
+        {
+            _displayMode = "Gantt";
+            await CloseMenu();
+            RefreshTasks();
         }
 
         private void SortTasksForToday()
@@ -555,10 +578,7 @@ namespace Task_Scheduler
             TaskNotificationScheduler.NotificationSent -= OnNotificationSent;
         }
 
-        private void OnNotificationSent(object? sender, EventArgs e)
-        {
-            UpdateNotificationIcon();
-        }
+        private void OnNotificationSent(object? sender, EventArgs e) => UpdateNotificationIcon();
 
         private void RefreshTasks()
         {
@@ -649,11 +669,98 @@ namespace Task_Scheduler
             CreateTaskButton.IsVisible = false;
             PlusImageButton.IsVisible = true;
 
-            foreach (var task in sortedTasks)
+            switch (_displayMode)
             {
-                var taskFrame = CreateTaskFrame(task);
-                TasksContainer.Children.Add(taskFrame);
+                case "Kanban":
+                    RenderKanbanView(sortedTasks);
+                    break;
+                case "Calendar":
+                    RenderCalendarView(sortedTasks);
+                    break;
+                case "Gantt":
+                    RenderGanttView(sortedTasks);
+                    break;
+                default:
+                    foreach (var task in sortedTasks)
+                    {
+                        var taskFrame = CreateTaskFrame(task);
+                        TasksContainer.Children.Add(taskFrame);
+                    }
+                    break;
             }
+        }
+
+        private void RenderKanbanView(List<TaskItem> tasks)
+        {
+            var todoTasks = tasks.Where(t => !t.IsCompleted).ToList();
+            var doneTasks = tasks.Where(t => t.IsCompleted).ToList();
+            var kanbanLayout = new Grid { ColumnSpacing = 15 };
+            kanbanLayout.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            kanbanLayout.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            var todoColumn = new StackLayout { Spacing = 10 };
+            var doneColumn = new StackLayout { Spacing = 10 };
+            todoColumn.Children.Add(new Label { Text = "К выполнению", FontSize = 18, FontAttributes = FontAttributes.Bold });
+            doneColumn.Children.Add(new Label { Text = "Выполнено", FontSize = 18, FontAttributes = FontAttributes.Bold });
+            foreach (var task in todoTasks)
+                todoColumn.Children.Add(CreateTaskFrame(task));
+            foreach (var task in doneTasks)
+                doneColumn.Children.Add(CreateTaskFrame(task));
+            kanbanLayout.Children.Add(todoColumn); Grid.SetColumn(todoColumn, 0);
+            kanbanLayout.Children.Add(doneColumn); Grid.SetColumn(doneColumn, 1);
+            TasksContainer.Children.Add(kanbanLayout);
+        }
+
+        private void RenderCalendarView(List<TaskItem> tasks)
+        {
+            var weekStart = DateTime.Today;
+            while (weekStart.DayOfWeek != DayOfWeek.Monday)
+                weekStart = weekStart.AddDays(-1);
+            var calendarLayout = new StackLayout { Spacing = 15 };
+            var headerLabel = new Label { Text = $"Неделя {weekStart:dd.MM} - {weekStart.AddDays(6):dd.MM}", FontSize = 16, FontAttributes = FontAttributes.Bold };
+            calendarLayout.Children.Add(headerLabel);
+            for (int i = 0; i < 7; i++)
+            {
+                var day = weekStart.AddDays(i);
+                var dayTasks = tasks.Where(t => GetTaskDueDateTime(t)?.Date == day).ToList();
+                var dayLayout = new StackLayout { Spacing = 5 };
+                dayLayout.Children.Add(new Label { Text = $"{day:dddd, dd.MM}", FontSize = 14, FontAttributes = FontAttributes.Bold });
+                foreach (var task in dayTasks)
+                    dayLayout.Children.Add(CreateTaskFrame(task));
+                if (dayTasks.Count == 0)
+                    dayLayout.Children.Add(new Label { Text = "Нет задач", FontSize = 12, TextColor = Colors.Gray });
+                calendarLayout.Children.Add(dayLayout);
+            }
+            TasksContainer.Children.Add(calendarLayout);
+        }
+
+        private void RenderGanttView(List<TaskItem> tasks)
+        {
+            var ganttLayout = new StackLayout { Spacing = 10 };
+            var minDate = tasks.Select(t => GetTaskDueDateTime(t)).Where(d => d.HasValue).Select(d => d!.Value.Date).DefaultIfEmpty(DateTime.Today).Min();
+            var maxDate = tasks.Select(t => GetTaskDueDateTime(t)).Where(d => d.HasValue).Select(d => d!.Value.Date).DefaultIfEmpty(DateTime.Today.AddDays(7)).Max();
+            ganttLayout.Children.Add(new Label { Text = $"Период: {minDate:dd.MM} - {maxDate:dd.MM}", FontSize = 14, FontAttributes = FontAttributes.Bold });
+            foreach (var task in tasks)
+            {
+                var due = GetTaskDueDateTime(task);
+                if (due.HasValue)
+                {
+                    var taskRow = new StackLayout { Orientation = StackOrientation.Horizontal, Spacing = 10 };
+                    taskRow.Children.Add(new Label { Text = task.Title, WidthRequest = 150, FontSize = 14 });
+                    var barFrame = new Frame
+                    {
+                        BackgroundColor = GetImportanceBgColor(task.Importance),
+                        BorderColor = GetImportanceColor(task.Importance),
+                        CornerRadius = 4,
+                        Padding = 5,
+                        HasShadow = false,
+                        HorizontalOptions = LayoutOptions.FillAndExpand
+                    };
+                    barFrame.Content = new Label { Text = due.Value.ToString("dd.MM HH:mm"), FontSize = 12 };
+                    taskRow.Children.Add(barFrame);
+                    ganttLayout.Children.Add(taskRow);
+                }
+            }
+            TasksContainer.Children.Add(ganttLayout);
         }
 
         private async void OnPlusImageButtonClicked(object sender, EventArgs e)
@@ -663,12 +770,28 @@ namespace Task_Scheduler
             await Navigation.PushAsync(createTaskPage);
         }
 
+        private static Color GetImportanceColor(TaskImportance importance) => importance switch
+        {
+            TaskImportance.High => Color.FromArgb("#FF5252"),
+            TaskImportance.Low => Color.FromArgb("#4CAF50"),
+            _ => Color.FromArgb("#FFC107")
+        };
+
+        private static Color GetImportanceBgColor(TaskImportance importance) => importance switch
+        {
+            TaskImportance.High => Color.FromArgb("#FFEBEE"),
+            TaskImportance.Low => Color.FromArgb("#E8F5E9"),
+            _ => Color.FromArgb("#FFF8E1")
+        };
+
         private Frame CreateTaskFrame(TaskItem task)
         {
+            var borderColor = GetImportanceColor(task.Importance);
+            var bgColor = GetImportanceBgColor(task.Importance);
             var frame = new Frame
             {
-                BackgroundColor = Colors.White,
-                BorderColor = Colors.LightGray,
+                BackgroundColor = task.IsCompleted ? Colors.White : bgColor,
+                BorderColor = borderColor,
                 CornerRadius = 10,
                 Padding = 15,
                 Margin = new Thickness(0, 0, 0, 10),
@@ -797,6 +920,22 @@ namespace Task_Scheduler
                 mainLayout.Children.Add(dateTimeLayout);
             }
 
+            // Повторяемость
+            if (task.IsRecurring && task.Recurrence != RecurrenceType.None)
+            {
+                var recurText = task.Recurrence switch
+                {
+                    RecurrenceType.Daily => "🔄 Ежедневно",
+                    RecurrenceType.Weekly => "🔄 Еженедельно",
+                    RecurrenceType.Monthly => "🔄 Ежемесячно",
+                    _ => ""
+                };
+                if (!string.IsNullOrEmpty(recurText))
+                {
+                    mainLayout.Children.Add(new Label { Text = recurText, FontSize = 12, TextColor = Colors.DarkBlue });
+                }
+            }
+
             // Подзадачи
             if (task.SubTasks != null && task.SubTasks.Count > 0)
             {
@@ -863,6 +1002,11 @@ namespace Task_Scheduler
                 task.IsCompleted = !task.IsCompleted;
                 task.LastUpdated = DateTime.Now;
                 TaskService.Instance.UpdateTask(task);
+                if (task.IsCompleted && task.Id == _activePomodoroTaskId)
+                {
+                    _pomodoroCts?.Cancel();
+                    _activePomodoroTaskId = null;
+                }
                 RefreshTasks();
             };
             checkBox.GestureRecognizers.Add(checkTap);
@@ -889,6 +1033,67 @@ namespace Task_Scheduler
             mainLayout.Children.Remove(titleLabel);
             mainLayout.Children.Insert(0, headerLayout);
 
+            // Помодоро таймер на карточке задачи
+            if (task.PomodoroDurationMinutes > 0 && !task.IsCompleted)
+            {
+                var pomodoroSection = new StackLayout { Spacing = 8, Margin = new Thickness(0, 10, 0, 0) };
+                var pomodoroStartButton = new Button
+                {
+                    Text = "⏱ Запустить таймер",
+                    BackgroundColor = Color.FromArgb("#4CAF50"),
+                    TextColor = Colors.White,
+                    CornerRadius = 8,
+                    Padding = new Thickness(12, 8)
+                };
+                var pomodoroTimerLabel = new Label { Text = "25:00", FontSize = 24, FontAttributes = FontAttributes.Bold, IsVisible = false };
+                var pomodoroStopButton = new Button { Text = "Остановить", BackgroundColor = Color.FromArgb("#FF5252"), TextColor = Colors.White, CornerRadius = 8, IsVisible = false };
+                pomodoroSection.Children.Add(pomodoroStartButton);
+                pomodoroSection.Children.Add(pomodoroTimerLabel);
+                pomodoroSection.Children.Add(pomodoroStopButton);
+                mainLayout.Children.Add(pomodoroSection);
+
+                pomodoroStartButton.Clicked += async (_, _) =>
+                {
+                    pomodoroStartButton.IsVisible = false;
+                    pomodoroTimerLabel.IsVisible = true;
+                    pomodoroStopButton.IsVisible = true;
+                    pomodoroTimerLabel.Text = $"{task.PomodoroDurationMinutes:00}:00";
+                    _activePomodoroTaskId = task.Id;
+                    _pomodoroCts?.Cancel();
+                    _pomodoroCts = new System.Threading.CancellationTokenSource();
+                    var duration = TimeSpan.FromMinutes(task.PomodoroDurationMinutes);
+                    var endTime = DateTime.Now + duration;
+                    try
+                    {
+                        while (DateTime.Now < endTime && !_pomodoroCts.Token.IsCancellationRequested)
+                        {
+                            var remaining = endTime - DateTime.Now;
+                            pomodoroTimerLabel.Text = $"{(int)remaining.TotalMinutes:00}:{remaining.Seconds:00}";
+                            await Task.Delay(1000, _pomodoroCts.Token);
+                        }
+                        if (!_pomodoroCts.Token.IsCancellationRequested)
+                            pomodoroTimerLabel.Text = "Готово!";
+                    }
+                    catch (OperationCanceledException) { }
+                    finally
+                    {
+                        if (task.Id == _activePomodoroTaskId)
+                            _activePomodoroTaskId = null;
+                        pomodoroStartButton.IsVisible = true;
+                        pomodoroTimerLabel.IsVisible = false;
+                        pomodoroStopButton.IsVisible = false;
+                        RefreshTasks();
+                    }
+                };
+                pomodoroStopButton.Clicked += (_, _) =>
+                {
+                    _pomodoroCts?.Cancel();
+                    if (task.Id == _activePomodoroTaskId)
+                        _activePomodoroTaskId = null;
+                    RefreshTasks();
+                };
+            }
+
             frame.Content = mainLayout;
             return frame;
         }
@@ -896,36 +1101,14 @@ namespace Task_Scheduler
         private async Task ShowTaskContextMenu(ImageButton sender, TaskItem task)
         {
             string favoriteAction = task.IsFavorite ? "Убрать из избранного" : "В избранное";
-            string completedAction = task.IsCompleted ? "Отменить выполнение" : "Отметить выполненной";
-            string action = await DisplayActionSheet(
-                "Действия с задачей",
-                "Отмена",
-                null,
-                "Редактировать",
-                completedAction,
-                favoriteAction,
-                "Удалить",
-                "Сортировка");
+            var actions = new string[] { "Редактировать", favoriteAction, "Удалить" };
+            string action = await DisplayActionSheet("Действия с задачей", "Отмена", null, actions);
 
             switch (action)
             {
                 case "Редактировать":
                     var editPage = new CreateTaskPage(task);
                     await Navigation.PushAsync(editPage);
-                    break;
-
-                case "Отметить выполненной":
-                    task.IsCompleted = true;
-                    task.LastUpdated = DateTime.Now;
-                    TaskService.Instance.UpdateTask(task);
-                    RefreshTasks();
-                    break;
-
-                case "Отменить выполнение":
-                    task.IsCompleted = false;
-                    task.LastUpdated = DateTime.Now;
-                    TaskService.Instance.UpdateTask(task);
-                    RefreshTasks();
                     break;
 
                 case "В избранное":
@@ -953,12 +1136,9 @@ namespace Task_Scheduler
                         RefreshTasks();
                     }
                     break;
-
-                case "Сортировка":
-                    await ShowSortMenu();
-                    break;
             }
         }
+
 
         private async Task ShowSortMenu()
         {
@@ -973,12 +1153,12 @@ namespace Task_Scheduler
 
             switch (action)
             {
-                case "☰ Custom order":
+                case "Custom order":
                     _currentSortOption = "Custom order";
                     RefreshTasks();
                     break;
 
-                case "📅 Due date":
+                case "Due date":
                     _currentSortOption = "Due date";
                     RefreshTasks();
                     break;
@@ -1029,11 +1209,11 @@ namespace Task_Scheduler
                     }).ToList();
 
                 case "Alphabetical":
-                    // Сортировка по алфавиту (название задачи)
+                case "Алфавиту":
                     return tasks.OrderBy(t => t.Title, StringComparer.OrdinalIgnoreCase).ToList();
 
                 case "Last updated":
-                    // Сортировка по дате последнего обновления (новые сначала)
+                case "Последнее обновление":
                     return tasks.OrderByDescending(t => t.LastUpdated).ToList();
 
                 default:

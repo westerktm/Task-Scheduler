@@ -21,6 +21,15 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
           
@@ -36,17 +45,29 @@
                     AutoSize="TextChanges"
                     Margin="0,0,0,15" />
 
-            <Label Text="Тип времени выполнения:"
+            <!-- Выбор: указывать дату или нет -->
+            <StackLayout Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,15">
+                <Label Text="Указать дату выполнения?"
+                       FontSize="16"
+                       VerticalOptions="Center" />
+                <Switch x:Name="UseDateSwitch"
+                        VerticalOptions="Center"
+                        Toggled="OnUseDateToggled" />
+            </StackLayout>
+
+            <Label x:Name="TimeTypeLabel"
+                   Text="Тип времени выполнения:"
                    FontSize="16"
-                   Grid.Row="3"
+                   Grid.Row="4"
                    Margin="0,0,0,5" />
 
             <Picker x:Name="TimeTypePicker"
-                    Grid.Row="4"
+                    Grid.Row="5"
                     Margin="0,0,0,15"
                     SelectedIndexChanged="OnTimeTypeChanged">
                 <Picker.ItemsSource>
                     <x:Array Type="{x:Type x:String}">
+                        <x:String>Без даты</x:String>
                         <x:String>Одна дата и время</x:String>
                         <x:String>Диапазон (от - до)</x:String>
                     </x:Array>
@@ -57,80 +78,167 @@
             <Label x:Name="SimpleDateLabel"
                    Text="Дата выполнения:"
                    FontSize="16"
-                   Grid.Row="5"
+                   Grid.Row="6"
                    Margin="0,0,0,5"
-                   IsVisible="True" />
+                   IsVisible="False" />
 
             <DatePicker x:Name="TaskDatePicker"
-                        Grid.Row="6"
+                        Grid.Row="7"
                         Margin="0,0,0,15"
-                        IsVisible="True" />
+                        IsVisible="False" />
 
             <Label x:Name="SimpleTimeLabel"
-                   Text="Время выполнения:"
+                   Text="Время выполнения (ЧЧ:ММ или выбор):"
                    FontSize="16"
-                   Grid.Row="7"
+                   Grid.Row="8"
                    Margin="0,0,0,5"
-                   IsVisible="True" />
+                   IsVisible="False" />
 
-            <TimePicker x:Name="TaskTimePicker"
-                        Grid.Row="8"
-                        Margin="0,0,0,15"
-                        IsVisible="True"
-                        Format="HH:mm" />
+            <Grid x:Name="SimpleTimeGrid" Grid.Row="9" Margin="0,0,0,15" IsVisible="False">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Entry x:Name="TaskTimeEntry"
+                       Placeholder="ЧЧ:ММ (например 14:30)"
+                       Keyboard="Numeric"
+                       TextChanged="OnTaskTimeEntryChanged" />
+                <TimePicker x:Name="TaskTimePicker"
+                            Grid.Column="1"
+                            Format="HH:mm"
+                            Unfocused="OnTaskTimePickerUnfocused" />
+            </Grid>
 
             <!-- Режим диапазона: от и до -->
             <Label x:Name="RangeFromDateLabel"
                    Text="Дата начала:"
                    FontSize="16"
-                   Grid.Row="5"
+                   Grid.Row="6"
                    Margin="0,0,0,5"
                    IsVisible="False" />
 
             <DatePicker x:Name="TaskDateFromPicker"
-                        Grid.Row="6"
+                        Grid.Row="7"
                         Margin="0,0,0,15"
                         IsVisible="False" />
 
             <Label x:Name="RangeFromTimeLabel"
-                   Text="Время начала:"
+                   Text="Время начала (ЧЧ:ММ или выбор):"
                    FontSize="16"
-                   Grid.Row="7"
+                   Grid.Row="8"
                    Margin="0,0,0,5"
                    IsVisible="False" />
 
-            <TimePicker x:Name="TaskTimeFromPicker"
-                        Grid.Row="8"
-                        Margin="0,0,0,15"
-                        IsVisible="False"
-                        Format="HH:mm" />
+            <Grid x:Name="RangeFromTimeGrid" Grid.Row="9" Margin="0,0,0,15" IsVisible="False">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Entry x:Name="TaskTimeFromEntry" Placeholder="ЧЧ:ММ" Keyboard="Numeric" TextChanged="OnTaskTimeFromEntryChanged" />
+                <TimePicker x:Name="TaskTimeFromPicker" Grid.Column="1" Format="HH:mm" Unfocused="OnTaskTimeFromPickerUnfocused" />
+            </Grid>
 
             <Label x:Name="RangeToDateLabel"
                    Text="Дата окончания:"
                    FontSize="16"
-                   Grid.Row="9"
+                   Grid.Row="10"
                    Margin="0,0,0,5"
                    IsVisible="False" />
 
             <DatePicker x:Name="TaskDateToPicker"
-                        Grid.Row="10"
+                        Grid.Row="11"
                         Margin="0,0,0,15"
                         IsVisible="False" />
 
             <Label x:Name="RangeToTimeLabel"
-                   Text="Время окончания:"
+                   Text="Время окончания (ЧЧ:ММ или выбор):"
                    FontSize="16"
-                   Grid.Row="11"
+                   Grid.Row="12"
                    Margin="0,0,0,5"
                    IsVisible="False" />
 
-            <TimePicker x:Name="TaskTimeToPicker"
-                        Grid.Row="12"
-                        Margin="0,0,0,15"
-                        IsVisible="False"
-                        Format="HH:mm" />
+            <Grid x:Name="RangeToTimeGrid" Grid.Row="13" Margin="0,0,0,15" IsVisible="False">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Entry x:Name="TaskTimeToEntry" Placeholder="ЧЧ:ММ" Keyboard="Numeric" TextChanged="OnTaskTimeToEntryChanged" />
+                <TimePicker x:Name="TaskTimeToPicker" Grid.Column="1" Format="HH:mm" Unfocused="OnTaskTimeToPickerUnfocused" />
+            </Grid>
 
-            <StackLayout x:Name="SubTasksStackLayout" Grid.Row="13" Margin="0,0,0,15">
+            <!-- Напоминание -->
+            <Label Text="Напоминание:"
+                   FontSize="16"
+                   Grid.Row="14"
+                   Margin="0,10,0,5" />
+            <Picker x:Name="ReminderPicker"
+                    Grid.Row="15"
+                    Margin="0,0,0,15">
+                <Picker.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>Без напоминания</x:String>
+                        <x:String>За 5 минут</x:String>
+                        <x:String>За 15 минут</x:String>
+                        <x:String>За 30 минут</x:String>
+                    </x:Array>
+                </Picker.ItemsSource>
+            </Picker>
+
+            <!-- Повторяемость -->
+            <Label Text="Повторяемость:"
+                   FontSize="16"
+                   Grid.Row="16"
+                   Margin="0,0,0,5" />
+            <Picker x:Name="RecurrencePicker"
+                    Grid.Row="17"
+                    Margin="0,0,0,15">
+                <Picker.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>Не повторять</x:String>
+                        <x:String>Ежедневно</x:String>
+                        <x:String>Еженедельно</x:String>
+                        <x:String>Ежемесячно</x:String>
+                    </x:Array>
+                </Picker.ItemsSource>
+            </Picker>
+
+            <!-- Важность -->
+            <Label Text="Важность:"
+                   FontSize="16"
+                   Grid.Row="18"
+                   Margin="0,0,0,5" />
+            <Picker x:Name="ImportancePicker"
+                    Grid.Row="19"
+                    Margin="0,0,0,15">
+                <Picker.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>Низкая</x:String>
+                        <x:String>Средняя</x:String>
+                        <x:String>Высокая</x:String>
+                    </x:Array>
+                </Picker.ItemsSource>
+            </Picker>
+
+            <!-- Помодоро -->
+            <Label Text="Помодоро (минуты):"
+                   FontSize="16"
+                   Grid.Row="20"
+                   Margin="0,0,0,5" />
+            <Picker x:Name="PomodoroPicker"
+                    Grid.Row="21"
+                    Margin="0,0,0,15">
+                <Picker.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>Выключено</x:String>
+                        <x:String>15 минут</x:String>
+                        <x:String>25 минут</x:String>
+                        <x:String>45 минут</x:String>
+                        <x:String>60 минут</x:String>
+                    </x:Array>
+                </Picker.ItemsSource>
+            </Picker>
+
+            <StackLayout x:Name="SubTasksStackLayout" Grid.Row="22" Margin="0,0,0,15">
                 <Label Text="Подзадачи:"
                        FontSize="16"
                        Margin="0,0,0,10" />
@@ -145,17 +253,18 @@
                         TextColor="#333333"
                         CornerRadius="8"
                         Padding="15,8"
-                        Margin="500,10,500,10" />
+                        Margin="0,10,0,10" />
             </StackLayout>
 
             <Button Text="Сохранить"
                     Clicked="OnSaveButtonClicked"
-                    Grid.Row="14"
+                    Grid.Row="23"
                     BackgroundColor="#512BD4"
                     TextColor="White"
                     CornerRadius="8"
                     Padding="20,10"
-                    Margin="500,100,500,0" />
+                    Margin="0,20,0,0"
+                    HorizontalOptions="Fill" />
 
         </Grid>
     </ScrollView>

@@ -58,18 +58,40 @@ namespace Task_Scheduler.Services
             try
             {
                 var now = DateTime.Now;
-                var tasks = _taskService.GetTasks();
+                var tasks = _taskService.GetTasks().ToList();
 
                 foreach (var task in tasks)
                 {
                     // Пропускаем выполненные задачи
                     if (task.IsCompleted) continue;
                     
-                    // Пропускаем задачи, для которых уже отправлено уведомление или пользователь удалил уведомление
-                    if (task.DueNotificationSent || task.NotificationDismissed) continue;
+                    // Пропускаем задачи, которые пользователь удалил из уведомлений
+                    if (task.NotificationDismissed) continue;
 
                     DateTime? dueDateTime = GetDueDateTime(task);
-                    if (dueDateTime.HasValue && now >= dueDateTime.Value)
+                    if (!dueDateTime.HasValue) continue;
+
+                    var timeUntilDue = dueDateTime.Value - now;
+
+                    // Напоминание за N минут до дедлайна
+                    if (task.ReminderMinutes > 0 && !task.ReminderNotificationSent)
+                    {
+                        var reminderThreshold = TimeSpan.FromMinutes(task.ReminderMinutes);
+                        if (timeUntilDue <= reminderThreshold && timeUntilDue > TimeSpan.Zero)
+                        {
+                            _notificationService.ShowNotification(
+                                "Task Scheduler",
+                                $"Напоминание: {task.Title} через {task.ReminderMinutes} мин.");
+                            task.ReminderNotificationSent = true;
+                            _taskService.UpdateTask(task);
+                            Microsoft.Maui.Controls.Application.Current?.Dispatcher.Dispatch(() =>
+                                NotificationSent?.Invoke(this, EventArgs.Empty));
+                        }
+                    }
+
+                    // Основное уведомление о наступлении дедлайна
+                    if (task.DueNotificationSent) continue;
+                    if (now >= dueDateTime.Value)
                     {
                         _notificationService.ShowNotification(
                             "Task Scheduler",
@@ -78,7 +100,12 @@ namespace Task_Scheduler.Services
                         task.DueNotificationSent = true;
                         _taskService.UpdateTask(task);
 
-                        // Уведомляем об изменении, чтобы иконка обновилась сразу (в UI-потоке)
+                        // Для повторяющихся задач: создать следующее вхождение
+                        if (task.IsRecurring && task.Recurrence != RecurrenceType.None)
+                        {
+                            CreateNextRecurrence(task);
+                        }
+
                         Microsoft.Maui.Controls.Application.Current?.Dispatcher.Dispatch(() =>
                             NotificationSent?.Invoke(this, EventArgs.Empty));
                     }
@@ -88,6 +115,56 @@ namespace Task_Scheduler.Services
             {
                 Debug.WriteLine($"TaskNotificationScheduler error: {ex.Message}");
             }
+        }
+
+        private void CreateNextRecurrence(TaskItem task)
+        {
+            var dueDateTime = GetDueDateTime(task);
+            if (!dueDateTime.HasValue) return;
+
+            var nextDue = task.Recurrence switch
+            {
+                RecurrenceType.Daily => dueDateTime.Value.AddDays(1),
+                RecurrenceType.Weekly => dueDateTime.Value.AddDays(7),
+                RecurrenceType.Monthly => dueDateTime.Value.AddMonths(1),
+                _ => dueDateTime.Value
+            };
+
+            var nextTask = new TaskItem
+            {
+                Title = task.Title,
+                Description = task.Description,
+                IsDateRange = task.IsDateRange,
+                ReminderMinutes = task.ReminderMinutes,
+                IsRecurring = task.IsRecurring,
+                Recurrence = task.Recurrence,
+                Importance = task.Importance,
+                PomodoroDurationMinutes = task.PomodoroDurationMinutes,
+                SubTasks = task.SubTasks.Select(s => new SubTask { Title = s.Title, IsCompleted = false }).ToList()
+            };
+
+            if (task.IsDateRange && task.DueDateFrom.HasValue && task.DueDateTo.HasValue)
+            {
+                var span = task.DueDateTo.Value - task.DueDateFrom.Value;
+                nextTask.DueDateFrom = nextDue.Date;
+                nextTask.DueTimeFrom = task.DueTimeFrom;
+                nextTask.DueDateTo = nextDue.Date + span;
+                nextTask.DueTimeTo = task.DueTimeTo;
+            }
+            else if (task.IsDateRange && task.DueDateFrom.HasValue)
+            {
+                nextTask.DueDateFrom = nextDue.Date;
+                nextTask.DueTimeFrom = task.DueTimeFrom;
+                nextTask.DueDateTo = null;
+                nextTask.DueTimeTo = task.DueTimeTo;
+            }
+            else
+            {
+                nextTask.DueDate = nextDue.Date;
+                nextTask.DueTime = task.DueTime;
+            }
+
+            _taskService.AddTask(nextTask);
         }
 
         private static DateTime? GetDueDateTime(TaskItem task)

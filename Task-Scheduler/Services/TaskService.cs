@@ -19,10 +19,7 @@ namespace Task_Scheduler.Services
             }
         }
 
-        public List<TaskItem> GetTasks()
-        {
-            return _tasks;
-        }
+        public List<TaskItem> GetTasks() => _tasks;
 
         public void AddTask(TaskItem task)
         {
@@ -51,9 +48,6 @@ namespace Task_Scheduler.Services
             }
         }
 
-        public TaskItem? GetTaskById(string taskId)
-        {
-            return _tasks.FirstOrDefault(t => t.Id == taskId);
-        }
+        public TaskItem? GetTaskById(string taskId) => _tasks.FirstOrDefault(t => t.Id == taskId);
     }
 }
