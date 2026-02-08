@@ -274,32 +274,105 @@
             </StackLayout>
         </Frame>
 
-        <!-- Панель настроек с переключателем темы -->
+        <!-- Панель настроек -->
         <Frame x:Name="SettingsPanel"
                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
                HasShadow="True"
                CornerRadius="10"
                Padding="15"
-               WidthRequest="220"
+               WidthRequest="280"
                HorizontalOptions="End"
                VerticalOptions="Start"
                Margin="0,60,10,0"
                IsVisible="False">
-            <StackLayout Spacing="10">
-                <Label Text="Настройки"
-                       FontSize="18"
-                       FontAttributes="Bold" />
+            <ScrollView MaximumHeightRequest="420">
+                <StackLayout Spacing="16">
+                    <Label Text="Настройки"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           Margin="0,0,0,4" />
 
-                <StackLayout Orientation="Horizontal"
-                             Spacing="10"
-                             VerticalOptions="Center">
-                    <Label Text="Тёмная тема"
-                           VerticalOptions="Center" />
-                    <Switch x:Name="ThemeSwitch"
-                            HorizontalOptions="EndAndExpand"
-                            Toggled="OnThemeSwitchToggled" />
+                    <!-- 1. Внешний вид -->
+                    <Label Text="Внешний вид"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#333333, Dark=#E0E0E0}" />
+                    <Picker x:Name="SettingsDisplayModePicker"
+                            Title="Режим отображения"
+                            SelectedIndexChanged="OnSettingsDisplayModeChanged">
+                        <Picker.ItemsSource>
+                            <x:Array Type="{x:Type x:String}">
+                                <x:String>Список</x:String>
+                                <x:String>Kanban</x:String>
+                                <x:String>Календарь</x:String>
+                                <x:String>Ганта</x:String>
+                            </x:Array>
+                        </Picker.ItemsSource>
+                    </Picker>
+
+                    <!-- 2. Темы и кастомизация -->
+                    <Label Text="Темы и кастомизация"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#333333, Dark=#E0E0E0}" />
+                    <Picker x:Name="SettingsThemePicker"
+                            Title="Тема"
+                            SelectedIndexChanged="OnSettingsThemeChanged">
+                        <Picker.ItemsSource>
+                            <x:Array Type="{x:Type x:String}">
+                                <x:String>Системная</x:String>
+                                <x:String>Светлая</x:String>
+                                <x:String>Тёмная</x:String>
+                            </x:Array>
+                        </Picker.ItemsSource>
+                    </Picker>
+                    <Picker x:Name="SettingsAccentPicker"
+                            Title="Акцент"
+                            SelectedIndexChanged="OnSettingsAccentChanged">
+                        <Picker.ItemsSource>
+                            <x:Array Type="{x:Type x:String}">
+                                <x:String>Фиолетовый</x:String>
+                                <x:String>Синий</x:String>
+                                <x:String>Зелёный</x:String>
+                                <x:String>Оранжевый</x:String>
+                            </x:Array>
+                        </Picker.ItemsSource>
+                    </Picker>
+
+                    <!-- 3. Уведомления -->
+                    <Label Text="Уведомления"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#333333, Dark=#E0E0E0}" />
+                    <StackLayout Orientation="Horizontal" Spacing="10" VerticalOptions="Center">
+                        <Label Text="Включить уведомления"
+                               VerticalOptions="Center"
+                               FontSize="13" />
+                        <Switch x:Name="SettingsNotificationsSwitch"
+                                HorizontalOptions="EndAndExpand"
+                                Toggled="OnSettingsNotificationsToggled" />
+                    </StackLayout>
+                    <Label Text="Тихие часы (не показывать уведомления):"
+                           FontSize="12"
+                           TextColor="{AppThemeBinding Light=#666666, Dark=#B0B0B0}" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <StackLayout Grid.Column="0" Spacing="2">
+                            <Label Text="С" FontSize="11" />
+                            <Entry x:Name="QuietHoursStartEntry"
+                                   Placeholder="22:00"
+                                   Keyboard="Numeric"
+                                   TextChanged="OnQuietHoursChanged" />
+                        </StackLayout>
+                        <StackLayout Grid.Column="1" Spacing="2">
+                            <Label Text="До" FontSize="11" />
+                            <Entry x:Name="QuietHoursEndEntry"
+                                   Placeholder="08:00"
+                                   Keyboard="Numeric"
+                                   TextChanged="OnQuietHoursChanged" />
+                        </StackLayout>
+                    </Grid>
                 </StackLayout>
-            </StackLayout>
+            </ScrollView>
         </Frame>
 
         <!-- Панель уведомлений в отдельном слое (не влияет на layout основного контента) -->

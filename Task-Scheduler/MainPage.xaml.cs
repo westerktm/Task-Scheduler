@@ -19,19 +19,9 @@ namespace Task_Scheduler
         {
             InitializeComponent();
 
-            // Инициализируем состояние переключателя темы
-            var currentTheme = Application.Current.UserAppTheme;
-            if (currentTheme == AppTheme.Unspecified)
-            {
-                // Следуем за системной темой: считаем, что светлая — выключатель в положении "Off"
-                ThemeSwitch.IsToggled = Application.Current.RequestedTheme == AppTheme.Dark;
-            }
-            else
-            {
-                ThemeSwitch.IsToggled = currentTheme == AppTheme.Dark;
-            }
+            ApplySavedTheme();
+            _displayMode = AppSettings.DefaultDisplayMode;
 
-            // Инициализируем иконку уведомлений
             UpdateNotificationIcon();
         }
 
@@ -305,23 +295,133 @@ namespace Task_Scheduler
             RefreshTasks();
         }
 
-        private void OnSettingsClicked(object sender, EventArgs e)
+        private async void OnSettingsClicked(object sender, EventArgs e)
         {
             _isSettingsOpen = !_isSettingsOpen;
-            SettingsPanel.IsVisible = _isSettingsOpen;
-            
-            // Закрываем панель уведомлений при открытии настроек
+
             if (_isSettingsOpen)
             {
                 _isNotificationsOpen = false;
                 NotificationsPanel.IsVisible = false;
+                LoadSettingsIntoPanel();
+
+                SettingsPanel.IsVisible = true;
+                SettingsPanel.Opacity = 0;
+                SettingsPanel.TranslationX = 30;
+
+                await Task.WhenAll(
+                    SettingsPanel.FadeTo(1, 250, Easing.CubicOut),
+                    SettingsPanel.TranslateTo(0, 0, 250, Easing.CubicOut)
+                );
+            }
+            else
+            {
+                await Task.WhenAll(
+                    SettingsPanel.FadeTo(0, 200, Easing.CubicIn),
+                    SettingsPanel.TranslateTo(30, 0, 200, Easing.CubicIn)
+                );
+                SettingsPanel.IsVisible = false;
+                SettingsPanel.TranslationX = 0;
+                SettingsPanel.Opacity = 1;
             }
         }
 
-        private void OnThemeSwitchToggled(object sender, ToggledEventArgs e) =>
-            // true  -> тёмная тема
-            // false -> светлая тема
-            Application.Current.UserAppTheme = e.Value ? AppTheme.Dark : AppTheme.Light;
+        private void ApplySavedTheme()
+        {
+            switch (AppSettings.AppTheme)
+            {
+                case AppSettings.ThemeDark:
+                    Application.Current!.UserAppTheme = AppTheme.Dark;
+                    break;
+                case AppSettings.ThemeLight:
+                    Application.Current!.UserAppTheme = AppTheme.Light;
+                    break;
+                default:
+                    Application.Current!.UserAppTheme = AppTheme.Unspecified;
+                    break;
+            }
+        }
+
+        private void LoadSettingsIntoPanel()
+        {
+            var mode = AppSettings.DefaultDisplayMode;
+            SettingsDisplayModePicker.SelectedIndex = mode switch
+            {
+                AppSettings.DisplayModeKanban => 1,
+                AppSettings.DisplayModeCalendar => 2,
+                AppSettings.DisplayModeGantt => 3,
+                _ => 0
+            };
+
+            var theme = AppSettings.AppTheme;
+            SettingsThemePicker.SelectedIndex = theme switch
+            {
+                AppSettings.ThemeLight => 1,
+                AppSettings.ThemeDark => 2,
+                _ => 0
+            };
+
+            var accent = AppSettings.AccentColor;
+            SettingsAccentPicker.SelectedIndex = accent switch { "Blue" => 1, "Green" => 2, "Orange" => 3, _ => 0 };
+
+            SettingsNotificationsSwitch.IsToggled = AppSettings.NotificationsEnabled;
+            QuietHoursStartEntry.Text = AppSettings.QuietHoursStart;
+            QuietHoursEndEntry.Text = AppSettings.QuietHoursEnd;
+        }
+
+        private void OnSettingsDisplayModeChanged(object? sender, EventArgs e)
+        {
+            if (SettingsDisplayModePicker.SelectedIndex < 0) return;
+            var mode = SettingsDisplayModePicker.SelectedIndex switch
+            {
+                1 => AppSettings.DisplayModeKanban,
+                2 => AppSettings.DisplayModeCalendar,
+                3 => AppSettings.DisplayModeGantt,
+                _ => AppSettings.DisplayModeList
+            };
+            AppSettings.DefaultDisplayMode = mode;
+            _displayMode = mode;
+            RefreshTasks();
+        }
+
+        private void OnSettingsThemeChanged(object? sender, EventArgs e)
+        {
+            if (SettingsThemePicker.SelectedIndex < 0) return;
+            var theme = SettingsThemePicker.SelectedIndex switch
+            {
+                1 => AppSettings.ThemeLight,
+                2 => AppSettings.ThemeDark,
+                _ => AppSettings.ThemeSystem
+            };
+            AppSettings.AppTheme = theme;
+            ApplySavedTheme();
+        }
+
+        private void OnSettingsAccentChanged(object? sender, EventArgs e)
+        {
+            if (SettingsAccentPicker.SelectedIndex < 0) return;
+            var accent = SettingsAccentPicker.SelectedIndex switch
+            {
+                1 => "Blue",
+                2 => "Green",
+                3 => "Orange",
+                _ => "Primary"
+            };
+            AppSettings.AccentColor = accent;
+        }
+
+        private void OnSettingsNotificationsToggled(object? sender, ToggledEventArgs e)
+        {
+            AppSettings.NotificationsEnabled = SettingsNotificationsSwitch.IsToggled;
+        }
+
+        private void OnQuietHoursChanged(object? sender, TextChangedEventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(QuietHoursStartEntry.Text))
+                AppSettings.QuietHoursStart = QuietHoursStartEntry.Text.Trim();
+            if (!string.IsNullOrWhiteSpace(QuietHoursEndEntry.Text))
+                AppSettings.QuietHoursEnd = QuietHoursEndEntry.Text.Trim();
+        }
 
         private async void OnMenuClicked(object sender, EventArgs e)
         {

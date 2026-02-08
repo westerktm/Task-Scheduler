@@ -57,6 +57,11 @@ namespace Task_Scheduler.Services
         {
             try
             {
+                if (!AppSettings.NotificationsEnabled)
+                    return;
+                if (AppSettings.IsInQuietHours(DateTime.Now))
+                    return;
+
                 var now = DateTime.Now;
                 var tasks = _taskService.GetTasks().ToList();
 
