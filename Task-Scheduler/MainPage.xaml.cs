@@ -24,6 +24,75 @@ namespace Task_Scheduler
 
             UpdateNotificationIcon();
             LoadAvatar();
+            
+            // Подписываемся на изменение размера окна для адаптивности
+            this.SizeChanged += OnPageSizeChanged;
+            UpdateLayoutForSize();
+            
+            // Убеждаемся, что панель уведомлений правильно инициализирована
+            if (NotificationsOverlay != null)
+            {
+                NotificationsOverlay.IsVisible = false;
+                NotificationsOverlay.InputTransparent = true;
+            }
+            if (NotificationsPanel != null)
+            {
+                NotificationsPanel.IsVisible = false;
+                NotificationsPanel.Opacity = 0;
+            }
+            
+            // Убеждаемся, что уведомления включены по умолчанию
+            if (!AppSettings.NotificationsEnabled)
+            {
+                // Если по какой-то причине уведомления выключены, включаем их
+                AppSettings.NotificationsEnabled = true;
+                System.Diagnostics.Debug.WriteLine("Notifications were disabled, enabling by default");
+            }
+        }
+
+        private void OnPageSizeChanged(object? sender, EventArgs e)
+        {
+            UpdateLayoutForSize();
+            // Обновляем задачи при изменении размера, чтобы применить новые размеры
+            RefreshTasks();
+        }
+
+        private void UpdateLayoutForSize()
+        {
+            // Получаем ширину страницы
+            var width = this.Width;
+            var height = this.Height;
+            
+            // Адаптируем размеры панелей для маленьких экранов
+            if (width > 0)
+            {
+                // Адаптируем панель настроек
+                if (SettingsPanel != null && width < 600)
+                {
+                    var panelWidth = Math.Max(250, width - 40);
+                    SettingsPanel.WidthRequest = panelWidth;
+                    SettingsPanel.MaximumWidthRequest = panelWidth;
+                    // Обновляем позицию в AbsoluteLayout
+                    AbsoluteLayout.SetLayoutBounds(SettingsPanel, new Rect(0.95, 60, panelWidth, 420));
+                }
+                
+                // Адаптируем панель уведомлений
+                if (NotificationsPanel != null && width < 600)
+                {
+                    var panelWidth = Math.Max(300, width - 20);
+                    NotificationsPanel.WidthRequest = panelWidth;
+                    NotificationsPanel.MaximumWidthRequest = panelWidth;
+                    NotificationsPanel.Margin = new Thickness(10, 60, 10, 0);
+                }
+                
+                // Адаптируем боковое меню
+                if (SideMenu != null && width < 600)
+                {
+                    var menuWidth = Math.Min(250, width * 0.8);
+                    SideMenu.WidthRequest = menuWidth;
+                    SideMenu.MaximumWidthRequest = menuWidth;
+                }
+            }
         }
 
         private async void OnAvatarClicked(object sender, EventArgs e)
@@ -84,55 +153,112 @@ namespace Task_Scheduler
 
         private async void OnNotificationsClicked(object sender, EventArgs e)
         {
-            _isNotificationsOpen = !_isNotificationsOpen;
-            
-            // Закрываем панель настроек при открытии уведомлений
-            if (_isNotificationsOpen)
+            try
             {
-                _isSettingsOpen = false;
-                SettingsPanel.IsVisible = false;
+                _isNotificationsOpen = !_isNotificationsOpen;
                 
-                // Делаем overlay интерактивным, чтобы клики попадали в панель
-                NotificationsOverlay.InputTransparent = false;
-                
-                // Показываем панель и запускаем анимацию появления
-                NotificationsPanel.IsVisible = true;
-                NotificationsPanel.TranslationY = -500; // Начальная позиция (выше экрана)
-                NotificationsPanel.Opacity = 0;
-                
-                RefreshNotifications();
-                
-                // Анимация плавного вытягивания вниз
-                await Task.WhenAll(
-                    NotificationsPanel.TranslateTo(0, 0, 300, Easing.CubicOut),
-                    NotificationsPanel.FadeTo(1, 300)
-                );
+                // Закрываем панель настроек при открытии уведомлений
+                if (_isNotificationsOpen)
+                {
+                    _isSettingsOpen = false;
+                    if (SettingsPanel != null)
+                    {
+                        SettingsPanel.IsVisible = false;
+                        SettingsPanel.Opacity = 0;
+                    }
+                    
+                    // Обновляем уведомления перед показом
+                    RefreshNotifications();
+                    
+                    // Показываем overlay и панель
+                    if (NotificationsOverlay != null)
+                    {
+                        NotificationsOverlay.IsVisible = true;
+                        NotificationsOverlay.InputTransparent = false;
+                    }
+                    
+                    if (NotificationsPanel != null)
+                    {
+                        // Устанавливаем правильную позицию перед показом
+                        var pageWidth = this.Width;
+                        if (pageWidth > 0)
+                        {
+                            var panelWidth = Math.Min(350, pageWidth - 20);
+                            NotificationsPanel.WidthRequest = panelWidth;
+                            NotificationsPanel.Margin = new Thickness(10, 60, 10, 0);
+                        }
+                        
+                        // Убеждаемся, что панель видима и правильно позиционирована
+                        NotificationsPanel.IsVisible = true;
+                        NotificationsPanel.Opacity = 0;
+                        NotificationsPanel.Scale = 0.8;
+                        NotificationsPanel.TranslationX = 30;
+                        
+                        // Анимация затемнения фона
+                        if (NotificationsOverlay != null)
+                        {
+                            NotificationsOverlay.Opacity = 0;
+                        }
+                        
+                        // Небольшая задержка перед анимацией, чтобы убедиться, что элемент отрендерился
+                        await Task.Delay(50);
+                        
+                        // Плавная анимация появления: затемнение фона + появление панели с масштабированием и сдвигом
+                        var overlayAnimation = NotificationsOverlay?.FadeTo(1, 300, Easing.CubicOut) ?? Task.CompletedTask;
+                        var panelFadeAnimation = NotificationsPanel.FadeTo(1, 300, Easing.CubicOut);
+                        var panelScaleAnimation = NotificationsPanel.ScaleTo(1, 300, Easing.CubicOut);
+                        var panelTranslateAnimation = NotificationsPanel.TranslateTo(0, 0, 300, Easing.CubicOut);
+                        
+                        await Task.WhenAll(overlayAnimation, panelFadeAnimation, panelScaleAnimation, panelTranslateAnimation);
+                    }
+                }
+                else
+                {
+                    // Плавная анимация закрытия
+                    if (NotificationsPanel != null)
+                    {
+                        var panelFadeAnimation = NotificationsPanel.FadeTo(0, 250, Easing.CubicIn);
+                        var panelScaleAnimation = NotificationsPanel.ScaleTo(0.8, 250, Easing.CubicIn);
+                        var panelTranslateAnimation = NotificationsPanel.TranslateTo(30, 0, 250, Easing.CubicIn);
+                        var overlayAnimation = NotificationsOverlay?.FadeTo(0, 250, Easing.CubicIn) ?? Task.CompletedTask;
+                        
+                        await Task.WhenAll(panelFadeAnimation, panelScaleAnimation, panelTranslateAnimation, overlayAnimation);
+                        
+                        NotificationsPanel.IsVisible = false;
+                        NotificationsPanel.Opacity = 0;
+                        NotificationsPanel.Scale = 1;
+                        NotificationsPanel.TranslationX = 0;
+                    }
+                    
+                    if (NotificationsOverlay != null)
+                    {
+                        NotificationsOverlay.IsVisible = false;
+                        NotificationsOverlay.InputTransparent = true;
+                        NotificationsOverlay.Opacity = 0;
+                    }
+                    
+                    // Обновляем иконку при закрытии панели
+                    UpdateNotificationIcon();
+                }
             }
-            else
+            catch (Exception ex)
             {
-                // Анимация закрытия (убирание вверх)
-                await Task.WhenAll(
-                    NotificationsPanel.TranslateTo(0, -500, 250, Easing.CubicIn),
-                    NotificationsPanel.FadeTo(0, 250)
-                );
-                
-                NotificationsPanel.IsVisible = false;
-                NotificationsPanel.TranslationY = 0; // Сбрасываем позицию
-                
-                // Возвращаем overlay в прозрачный режим, чтобы не блокировать клики по основному контенту
-                NotificationsOverlay.InputTransparent = true;
-                
-                // Обновляем иконку при закрытии панели
-                UpdateNotificationIcon();
+                // Логируем ошибку для отладки
+                System.Diagnostics.Debug.WriteLine($"Ошибка при открытии/закрытии уведомлений: {ex.Message}");
             }
         }
 
         private void OnNotificationsOverlayTapped(object sender, EventArgs e)
         {
-            // Закрываем панель при клике вне её
+            // Закрываем панель при клике вне её (только если клик был по overlay, а не по панели)
             if (_isNotificationsOpen)
             {
-                OnNotificationsClicked(sender, e);
+                // Проверяем, что клик был именно по overlay, а не по панели
+                // Если панель видима, закрываем её
+                if (NotificationsPanel.IsVisible)
+                {
+                    OnNotificationsClicked(sender, e);
+                }
             }
         }
 
@@ -352,28 +478,63 @@ namespace Task_Scheduler
 
             if (_isSettingsOpen)
             {
+                // Закрываем уведомления при открытии настроек
                 _isNotificationsOpen = false;
                 NotificationsPanel.IsVisible = false;
+                NotificationsPanel.Opacity = 0;
+                NotificationsOverlay.IsVisible = false;
+                
                 LoadSettingsIntoPanel();
 
+                // Показываем overlay и панель
+                if (SettingsOverlay != null)
+                {
+                    SettingsOverlay.IsVisible = true;
+                    SettingsOverlay.Opacity = 0;
+                }
+                
                 SettingsPanel.IsVisible = true;
                 SettingsPanel.Opacity = 0;
+                SettingsPanel.Scale = 0.8;
                 SettingsPanel.TranslationX = 30;
-
-                await Task.WhenAll(
-                    SettingsPanel.FadeTo(1, 250, Easing.CubicOut),
-                    SettingsPanel.TranslateTo(0, 0, 250, Easing.CubicOut)
-                );
+                
+                // Плавная анимация появления: затемнение фона + появление панели с масштабированием и сдвигом
+                var overlayAnimation = SettingsOverlay?.FadeTo(1, 300, Easing.CubicOut) ?? Task.CompletedTask;
+                var panelFadeAnimation = SettingsPanel.FadeTo(1, 300, Easing.CubicOut);
+                var panelScaleAnimation = SettingsPanel.ScaleTo(1, 300, Easing.CubicOut);
+                var panelTranslateAnimation = SettingsPanel.TranslateTo(0, 0, 300, Easing.CubicOut);
+                
+                await Task.WhenAll(overlayAnimation, panelFadeAnimation, panelScaleAnimation, panelTranslateAnimation);
             }
             else
             {
-                await Task.WhenAll(
-                    SettingsPanel.FadeTo(0, 200, Easing.CubicIn),
-                    SettingsPanel.TranslateTo(30, 0, 200, Easing.CubicIn)
-                );
+                // Плавная анимация исчезновения
+                var panelFadeAnimation = SettingsPanel.FadeTo(0, 250, Easing.CubicIn);
+                var panelScaleAnimation = SettingsPanel.ScaleTo(0.8, 250, Easing.CubicIn);
+                var panelTranslateAnimation = SettingsPanel.TranslateTo(30, 0, 250, Easing.CubicIn);
+                var overlayAnimation = SettingsOverlay?.FadeTo(0, 250, Easing.CubicIn) ?? Task.CompletedTask;
+                
+                await Task.WhenAll(panelFadeAnimation, panelScaleAnimation, panelTranslateAnimation, overlayAnimation);
+                
                 SettingsPanel.IsVisible = false;
+                SettingsPanel.Opacity = 0;
+                SettingsPanel.Scale = 1;
                 SettingsPanel.TranslationX = 0;
-                SettingsPanel.Opacity = 1;
+                
+                if (SettingsOverlay != null)
+                {
+                    SettingsOverlay.IsVisible = false;
+                    SettingsOverlay.Opacity = 0;
+                }
+            }
+        }
+
+        private void OnSettingsOverlayTapped(object sender, EventArgs e)
+        {
+            // Закрываем панель настроек при клике вне её
+            if (_isSettingsOpen)
+            {
+                OnSettingsClicked(sender, e);
             }
         }
 
@@ -395,105 +556,176 @@ namespace Task_Scheduler
 
         private void LoadSettingsIntoPanel()
         {
-            var mode = AppSettings.DefaultDisplayMode;
-            SettingsDisplayModePicker.SelectedIndex = mode switch
+            try
             {
-                AppSettings.DisplayModeKanban => 1,
-                AppSettings.DisplayModeCalendar => 2,
-                AppSettings.DisplayModeGantt => 3,
-                _ => 0
-            };
+                var mode = AppSettings.DefaultDisplayMode;
+                SettingsDisplayModePicker.SelectedIndex = mode switch
+                {
+                    AppSettings.DisplayModeKanban => 1,
+                    AppSettings.DisplayModeCalendar => 2,
+                    AppSettings.DisplayModeGantt => 3,
+                    _ => 0
+                };
 
-            var theme = AppSettings.AppTheme;
-            SettingsThemePicker.SelectedIndex = theme switch
+                var theme = AppSettings.AppTheme;
+                SettingsThemePicker.SelectedIndex = theme switch
+                {
+                    AppSettings.ThemeLight => 1,
+                    AppSettings.ThemeDark => 2,
+                    _ => 0
+                };
+
+                var font = AppSettings.FontFamily;
+                SettingsFontPicker.SelectedIndex = font switch
+                {
+                    "OpenSansRegular" => 1,
+                    "OpenSansSemibold" => 2,
+                    _ => 0 // system
+                };
+
+                var accent = AppSettings.AccentColor;
+                SettingsAccentPicker.SelectedIndex = accent switch { "Blue" => 1, "Green" => 2, "Orange" => 3, _ => 0 };
+
+                // Загружаем состояние уведомлений
+                var notificationsEnabled = AppSettings.NotificationsEnabled;
+                SettingsNotificationsSwitch.IsToggled = notificationsEnabled;
+                
+                QuietHoursStartEntry.Text = AppSettings.QuietHoursStart;
+                QuietHoursEndEntry.Text = AppSettings.QuietHoursEnd;
+                
+                System.Diagnostics.Debug.WriteLine($"Settings loaded: Notifications={notificationsEnabled} (default: true), QuietHours={AppSettings.QuietHoursStart}-{AppSettings.QuietHoursEnd}");
+            }
+            catch (Exception ex)
             {
-                AppSettings.ThemeLight => 1,
-                AppSettings.ThemeDark => 2,
-                _ => 0
-            };
-
-            var font = AppSettings.FontFamily;
-            SettingsFontPicker.SelectedIndex = font switch
-            {
-                "OpenSansRegular" => 1,
-                "OpenSansSemibold" => 2,
-                _ => 0 // system
-            };
-
-            var accent = AppSettings.AccentColor;
-            SettingsAccentPicker.SelectedIndex = accent switch { "Blue" => 1, "Green" => 2, "Orange" => 3, _ => 0 };
-
-            SettingsNotificationsSwitch.IsToggled = AppSettings.NotificationsEnabled;
-            QuietHoursStartEntry.Text = AppSettings.QuietHoursStart;
-            QuietHoursEndEntry.Text = AppSettings.QuietHoursEnd;
+                System.Diagnostics.Debug.WriteLine($"Error loading settings: {ex.Message}");
+            }
         }
 
         private void OnSettingsDisplayModeChanged(object? sender, EventArgs e)
         {
-            if (SettingsDisplayModePicker.SelectedIndex < 0) return;
-            var mode = SettingsDisplayModePicker.SelectedIndex switch
+            try
             {
-                1 => AppSettings.DisplayModeKanban,
-                2 => AppSettings.DisplayModeCalendar,
-                3 => AppSettings.DisplayModeGantt,
-                _ => AppSettings.DisplayModeList
-            };
-            AppSettings.DefaultDisplayMode = mode;
-            _displayMode = mode;
-            RefreshTasks();
+                if (SettingsDisplayModePicker.SelectedIndex < 0) return;
+                var mode = SettingsDisplayModePicker.SelectedIndex switch
+                {
+                    1 => AppSettings.DisplayModeKanban,
+                    2 => AppSettings.DisplayModeCalendar,
+                    3 => AppSettings.DisplayModeGantt,
+                    _ => AppSettings.DisplayModeList
+                };
+                AppSettings.DefaultDisplayMode = mode;
+                _displayMode = mode;
+                System.Diagnostics.Debug.WriteLine($"Display mode changed to: {mode}");
+                RefreshTasks();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in OnSettingsDisplayModeChanged: {ex.Message}");
+            }
         }
 
         private void OnSettingsThemeChanged(object? sender, EventArgs e)
         {
-            if (SettingsThemePicker.SelectedIndex < 0) return;
-            var theme = SettingsThemePicker.SelectedIndex switch
+            try
             {
-                1 => AppSettings.ThemeLight,
-                2 => AppSettings.ThemeDark,
-                _ => AppSettings.ThemeSystem
-            };
-            AppSettings.AppTheme = theme;
-            ApplySavedTheme();
+                if (SettingsThemePicker.SelectedIndex < 0) return;
+                var theme = SettingsThemePicker.SelectedIndex switch
+                {
+                    1 => AppSettings.ThemeLight,
+                    2 => AppSettings.ThemeDark,
+                    _ => AppSettings.ThemeSystem
+                };
+                AppSettings.AppTheme = theme;
+                System.Diagnostics.Debug.WriteLine($"Theme changed to: {theme}");
+                ApplySavedTheme();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in OnSettingsThemeChanged: {ex.Message}");
+            }
         }
 
         private void OnSettingsFontChanged(object? sender, EventArgs e)
         {
-            if (SettingsFontPicker.SelectedIndex < 0) return;
-            var font = SettingsFontPicker.SelectedIndex switch
+            try
             {
-                1 => "OpenSansRegular",
-                2 => "OpenSansSemibold",
-                _ => ""
-            };
-            AppSettings.FontFamily = font;
-            AppSettings.ApplyToResources(Application.Current!.Resources);
+                if (SettingsFontPicker.SelectedIndex < 0) return;
+                var font = SettingsFontPicker.SelectedIndex switch
+                {
+                    1 => "OpenSansRegular",
+                    2 => "OpenSansSemibold",
+                    _ => ""
+                };
+                AppSettings.FontFamily = font;
+                System.Diagnostics.Debug.WriteLine($"Font changed to: {font}");
+                AppSettings.ApplyToResources(Application.Current!.Resources);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in OnSettingsFontChanged: {ex.Message}");
+            }
         }
 
         private void OnSettingsAccentChanged(object? sender, EventArgs e)
         {
-            if (SettingsAccentPicker.SelectedIndex < 0) return;
-            var accent = SettingsAccentPicker.SelectedIndex switch
+            try
             {
-                1 => "Blue",
-                2 => "Green",
-                3 => "Orange",
-                _ => "Primary"
-            };
-            AppSettings.AccentColor = accent;
-            AppSettings.ApplyToResources(Application.Current!.Resources);
+                if (SettingsAccentPicker.SelectedIndex < 0) return;
+                var accent = SettingsAccentPicker.SelectedIndex switch
+                {
+                    1 => "Blue",
+                    2 => "Green",
+                    3 => "Orange",
+                    _ => "Primary"
+                };
+                AppSettings.AccentColor = accent;
+                System.Diagnostics.Debug.WriteLine($"Accent color changed to: {accent}");
+                AppSettings.ApplyToResources(Application.Current!.Resources);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in OnSettingsAccentChanged: {ex.Message}");
+            }
         }
 
         private void OnSettingsNotificationsToggled(object? sender, ToggledEventArgs e)
         {
-            AppSettings.NotificationsEnabled = SettingsNotificationsSwitch.IsToggled;
+            try
+            {
+                var isEnabled = SettingsNotificationsSwitch.IsToggled;
+                AppSettings.NotificationsEnabled = isEnabled;
+                System.Diagnostics.Debug.WriteLine($"Notifications enabled changed to: {isEnabled}");
+                
+                // Показываем сообщение пользователю
+                if (isEnabled)
+                {
+                    // Уведомления включены - можно показать краткое сообщение
+                    System.Diagnostics.Debug.WriteLine("Уведомления включены");
+                }
+                else
+                {
+                    // Уведомления выключены
+                    System.Diagnostics.Debug.WriteLine("Уведомления выключены");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in OnSettingsNotificationsToggled: {ex.Message}");
+            }
         }
 
         private void OnQuietHoursChanged(object? sender, TextChangedEventArgs e)
         {
             if (!string.IsNullOrWhiteSpace(QuietHoursStartEntry.Text))
+            {
                 AppSettings.QuietHoursStart = QuietHoursStartEntry.Text.Trim();
+                System.Diagnostics.Debug.WriteLine($"Quiet hours start: {AppSettings.QuietHoursStart}");
+            }
             if (!string.IsNullOrWhiteSpace(QuietHoursEndEntry.Text))
+            {
                 AppSettings.QuietHoursEnd = QuietHoursEndEntry.Text.Trim();
+                System.Diagnostics.Debug.WriteLine($"Quiet hours end: {AppSettings.QuietHoursEnd}");
+            }
         }
 
         private async void OnMenuClicked(object sender, EventArgs e)
@@ -513,17 +745,21 @@ namespace Task_Scheduler
             _isMenuOpen = true;
             MenuOverlay.IsVisible = true;
 
-            // Анимация затемнения фона
-            await MenuOverlay.FadeTo(1, 200);
+            // Анимация затемнения фона (opacity от 0 до 0.5)
+            await MenuOverlay.FadeTo(0.5, 200);
 
             // Анимация выдвижения меню
+            // Меню будет выдвигаться на всю доступную ширину или максимум 300px
             await SideMenu.TranslateTo(0, 0, 300, Easing.CubicOut);
         }
 
         private async Task CloseMenu()
         {
+            // Получаем ширину меню для правильной анимации
+            var menuWidth = SideMenu.Width > 0 ? SideMenu.Width : 250;
+            
             // Анимация скрытия меню
-            await SideMenu.TranslateTo(-250, 0, 300, Easing.CubicIn);
+            await SideMenu.TranslateTo(-menuWidth, 0, 300, Easing.CubicIn);
 
             // Анимация убирания затемнения
             await MenuOverlay.FadeTo(0, 200);
@@ -966,14 +1202,22 @@ namespace Task_Scheduler
         {
             var borderColor = GetImportanceColor(task.Importance);
             var bgColor = GetImportanceBgColor(task.Importance);
+            
+            // Адаптивные размеры в зависимости от размера окна
+            var pageWidth = this.Width;
+            var padding = pageWidth > 0 && pageWidth < 600 ? 10 : 15;
+            var fontSize = pageWidth > 0 && pageWidth < 600 ? 14 : 18;
+            var cornerRadius = pageWidth > 0 && pageWidth < 600 ? 8 : 10;
+            
             var frame = new Frame
             {
                 BackgroundColor = task.IsCompleted ? Colors.White : bgColor,
                 BorderColor = borderColor,
-                CornerRadius = 10,
-                Padding = 15,
-                Margin = new Thickness(0, 0, 0, 10),
-                HasShadow = true
+                CornerRadius = cornerRadius,
+                Padding = padding,
+                Margin = new Thickness(0, 0, 0, pageWidth > 0 && pageWidth < 600 ? 8 : 10),
+                HasShadow = true,
+                HorizontalOptions = LayoutOptions.Fill
             };
 
             var mainLayout = new StackLayout { Spacing = 10 };
@@ -982,7 +1226,7 @@ namespace Task_Scheduler
             var titleLabel = new Label
             {
                 Text = task.Title,
-                FontSize = 18,
+                FontSize = fontSize,
                 FontAttributes = FontAttributes.Bold,
                 TextColor = task.IsCompleted ? Colors.Gray : Colors.Black,
                 TextDecorations = task.IsCompleted ? TextDecorations.Strikethrough : TextDecorations.None
@@ -992,10 +1236,11 @@ namespace Task_Scheduler
             // Описание задачи
             if (!string.IsNullOrWhiteSpace(task.Description))
             {
+                var descFontSize = pageWidth > 0 && pageWidth < 600 ? 12 : 14;
                 var descriptionLabel = new Label
                 {
                     Text = task.Description,
-                    FontSize = 14,
+                    FontSize = descFontSize,
                     TextColor = Colors.Gray,
                     LineBreakMode = LineBreakMode.WordWrap,
                     TextDecorations = task.IsCompleted ? TextDecorations.Strikethrough : TextDecorations.None
@@ -1010,9 +1255,10 @@ namespace Task_Scheduler
                 if (task.DueDateFrom.HasValue || task.DueTimeFrom.HasValue || 
                     task.DueDateTo.HasValue || task.DueTimeTo.HasValue)
                 {
+                    var dateFontSize = pageWidth > 0 && pageWidth < 600 ? 12 : 14;
                     var rangeLabel = new Label
                     {
-                        FontSize = 14,
+                        FontSize = dateFontSize,
                         TextColor = Colors.DarkBlue,
                         LineBreakMode = LineBreakMode.WordWrap
                     };
@@ -1073,12 +1319,13 @@ namespace Task_Scheduler
                     Spacing = 10
                 };
 
+                var dateFontSize = pageWidth > 0 && pageWidth < 600 ? 12 : 14;
                 if (task.DueDate.HasValue)
                 {
                     var dateLabel = new Label
                     {
                         Text = $"📅 {task.DueDate.Value:dd.MM.yyyy}",
-                        FontSize = 14,
+                        FontSize = dateFontSize,
                         TextColor = Colors.DarkBlue
                     };
                     dateTimeLayout.Children.Add(dateLabel);
@@ -1089,7 +1336,7 @@ namespace Task_Scheduler
                     var timeLabel = new Label
                     {
                         Text = $"🕐 {task.DueTime.Value:hh\\:mm}",
-                        FontSize = 14,
+                        FontSize = dateFontSize,
                         TextColor = Colors.DarkBlue
                     };
                     dateTimeLayout.Children.Add(timeLabel);
@@ -1324,20 +1571,20 @@ namespace Task_Scheduler
                 "Сортировать по",
                 "Отмена",
                 null,
-                "Custom order",
-                "Due date",
+                "Пользовательский порядок",
+                "Дате завершения",
                 "Алфавиту",
                 "Последнее обновление");
 
             switch (action)
             {
                 case "Custom order":
-                    _currentSortOption = "Custom order";
+                    _currentSortOption = "Пользовательский порядок";
                     RefreshTasks();
                     break;
 
                 case "Due date":
-                    _currentSortOption = "Due date";
+                    _currentSortOption = "Дате завершения";
                     RefreshTasks();
                     break;
 

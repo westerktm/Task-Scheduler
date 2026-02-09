@@ -18,11 +18,13 @@
                          Spacing="10"
                          HorizontalOptions="Center"
                          Margin="0,10,0,20">
-                <Grid>
+                <Grid HorizontalOptions="Center">
                     <Image x:Name="ProfileAvatarImage"
                            Source="avatar.png"
                            WidthRequest="100"
                            HeightRequest="100"
+                           MinimumWidthRequest="80"
+                           MinimumHeightRequest="80"
                            Margin="0,0,0,10" />
                     <ImageButton Source="edit.png"
                                  WidthRequest="24"
@@ -30,7 +32,7 @@
                                  BackgroundColor="Transparent"
                                  HorizontalOptions="End"
                                  VerticalOptions="End"
-                                 Margin="160,0,40,0"
+                                 Margin="76,0,0,10"
                                  Clicked="OnEditAvatarProfileClicked" />
                 </Grid>
                 
@@ -40,8 +42,9 @@
             <Frame Grid.Row="1"
                    CornerRadius="16"
                    Padding="20,10"
-                   Margin="10,0,0,20"
-                   WidthRequest="240"
+                   Margin="10,0,10,20"
+                   MinimumWidthRequest="200"
+                   MaximumWidthRequest="300"
                    HeightRequest="40"
                    HorizontalOptions="Center"
                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}">
@@ -56,6 +59,7 @@
                    Margin="0,0,0,20"
                    Padding="12"
                    CornerRadius="12"
+                   HorizontalOptions="Fill"
                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}">
                 <StackLayout Spacing="8">
                     <StackLayout Orientation="Horizontal"
@@ -78,7 +82,7 @@
                                  IsVisible="False"
                                  Spacing="4"
                                  Margin="0,0,0,8">
-                        <Label Text="Линейный график (Burn-down)"
+                        <Label Text="Линейный график"
                                FontSize="13">
                             <Label.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnChartOptionTapped" CommandParameter="Line" />
@@ -105,7 +109,8 @@
                     </StackLayout>
 
                     <Grid x:Name="TaskChartsContainer"
-                          HeightRequest="140" />
+                          HeightRequest="140"
+                          MinimumHeightRequest="100" />
                 </StackLayout>
             </Frame>
 

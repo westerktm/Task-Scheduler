@@ -16,6 +16,7 @@ namespace Task_Scheduler.Services
         private const string KeyAccentColor = "AccentColor";         // имя цвета для типов задач
         private const string KeyFontFamily = "FontFamily";           // "" | "OpenSansRegular" | "OpenSansSemibold"
         private const string KeyAvatarPath = "AvatarPath";           // путь к выбранному аватару
+        private const string KeyProfileChartType = "ProfileChartType"; // "Line" | "Donut" | "Heatmap" | "Bar"
 
         public const string DisplayModeList = "List";
         public const string DisplayModeKanban = "Kanban";
@@ -77,6 +78,12 @@ namespace Task_Scheduler.Services
         {
             get => Preferences.Default.Get(KeyAvatarPath, "");
             set => Preferences.Default.Set(KeyAvatarPath, value ?? "");
+        }
+
+        public static string ProfileChartType
+        {
+            get => Preferences.Default.Get(KeyProfileChartType, "Line");
+            set => Preferences.Default.Set(KeyProfileChartType, value ?? "Line");
         }
 
         public static (Color light, Color dark) GetAccentColors()

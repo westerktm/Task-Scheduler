@@ -1,3 +1,5 @@
+using System;
+
 namespace Task_Scheduler.Services
 {
 #if WINDOWS
@@ -7,14 +9,31 @@ namespace Task_Scheduler.Services
         {
             try
             {
-                new Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder()
+                // Используем Windows Community Toolkit для показа уведомлений
+                var toast = new Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder()
                     .AddText(title)
                     .AddText(message)
-                    .Show();
+                    .SetToastScenario(Microsoft.Toolkit.Uwp.Notifications.ToastScenario.Default);
+                
+                toast.Show();
+                
+                // Также выводим в консоль для отладки
+                System.Diagnostics.Debug.WriteLine($"Notification: {title} - {message}");
             }
-            catch
+            catch (Exception ex)
             {
-                // Игнорируем ошибки показа уведомлений (например, если приложение не упаковано)
+                // Выводим ошибку для отладки
+                System.Diagnostics.Debug.WriteLine($"Notification error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                // Пытаемся показать через альтернативный способ
+                try
+                {
+                    Microsoft.Maui.Controls.Application.Current?.MainPage?.DisplayAlert(title, message, "OK");
+                }
+                catch
+                {
+                    // Игнорируем ошибки
+                }
             }
         }
     }
@@ -23,7 +42,15 @@ namespace Task_Scheduler.Services
     {
         public void ShowNotification(string title, string message)
         {
-            // Заглушка для платформ, отличных от Windows
+            // Для других платформ используем DisplayAlert
+            try
+            {
+                Microsoft.Maui.Controls.Application.Current?.MainPage?.DisplayAlert(title, message, "OK");
+            }
+            catch
+            {
+                // Игнорируем ошибки
+            }
         }
     }
 #endif

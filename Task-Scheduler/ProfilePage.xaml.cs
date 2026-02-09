@@ -11,6 +11,7 @@ namespace Task_Scheduler
         {
             InitializeComponent();
             LoadAvatar();
+            _currentChartType = AppSettings.ProfileChartType;
             RenderCurrentChart();
         }
 
@@ -82,6 +83,7 @@ namespace Task_Scheduler
                 return;
 
             _currentChartType = type;
+            AppSettings.ProfileChartType = type;
             ChartsDropdown.IsVisible = false;
             RenderCurrentChart();
         }

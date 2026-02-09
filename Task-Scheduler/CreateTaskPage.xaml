@@ -5,7 +5,9 @@
              Title="Создать задачу">
 
     <ScrollView>
-        <Grid Padding="20">
+        <Grid Padding="20"
+              MaximumWidthRequest="800"
+              HorizontalOptions="Fill">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -36,22 +38,30 @@
             <Entry x:Name="TaskTitleEntry"
                    Placeholder="Название задачи"
                    Grid.Row="1"
-                   Margin="0,0,0,15" />
+                   Margin="0,0,0,15"
+                   HorizontalOptions="Fill" />
 
             <!-- Описание задачи -->
             <Editor x:Name="TaskDescriptionEditor"
                     Grid.Row="2"
                     Placeholder="Описание задачи"
                     AutoSize="TextChanges"
-                    Margin="0,0,0,15" />
+                    Margin="0,0,0,15"
+                    HorizontalOptions="Fill"
+                    MinimumHeightRequest="80" />
 
             <!-- Выбор: указывать дату или нет -->
-            <StackLayout Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,15">
+            <StackLayout Grid.Row="3" 
+                         Orientation="Horizontal" 
+                         Margin="0,0,0,15"
+                         HorizontalOptions="Fill">
                 <Label Text="Указать дату выполнения?"
                        FontSize="16"
-                       VerticalOptions="Center" />
+                       VerticalOptions="Center"
+                       HorizontalOptions="StartAndExpand" />
                 <Switch x:Name="UseDateSwitch"
                         VerticalOptions="Center"
+                        HorizontalOptions="End"
                         Toggled="OnUseDateToggled" />
             </StackLayout>
 
@@ -238,12 +248,16 @@
                 </Picker.ItemsSource>
             </Picker>
 
-            <StackLayout x:Name="SubTasksStackLayout" Grid.Row="22" Margin="0,0,0,15">
+            <StackLayout x:Name="SubTasksStackLayout" 
+                         Grid.Row="22" 
+                         Margin="0,0,0,15"
+                         HorizontalOptions="Fill">
                 <Label Text="Подзадачи:"
                        FontSize="16"
                        Margin="0,0,0,10" />
 
-                <ScrollView HeightRequest="100">
+                <ScrollView HeightRequest="100"
+                            MinimumHeightRequest="80">
                     <StackLayout x:Name="SubTasksContainer" />
                 </ScrollView>
 
@@ -253,7 +267,8 @@
                         TextColor="#333333"
                         CornerRadius="8"
                         Padding="15,8"
-                        Margin="0,10,0,10" />
+                        Margin="0,10,0,10"
+                        HorizontalOptions="Fill" />
             </StackLayout>
 
             <Button Text="Сохранить"

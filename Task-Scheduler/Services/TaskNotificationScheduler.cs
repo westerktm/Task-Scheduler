@@ -58,12 +58,20 @@ namespace Task_Scheduler.Services
             try
             {
                 if (!AppSettings.NotificationsEnabled)
+                {
+                    Debug.WriteLine("Notifications are disabled in settings");
                     return;
-                if (AppSettings.IsInQuietHours(DateTime.Now))
-                    return;
-
+                }
+                
                 var now = DateTime.Now;
+                if (AppSettings.IsInQuietHours(now))
+                {
+                    Debug.WriteLine($"Current time {now:HH:mm} is in quiet hours");
+                    return;
+                }
+
                 var tasks = _taskService.GetTasks().ToList();
+                Debug.WriteLine($"Checking {tasks.Count} tasks for notifications at {now:HH:mm:ss}");
 
                 foreach (var task in tasks)
                 {
@@ -82,8 +90,13 @@ namespace Task_Scheduler.Services
                     if (task.ReminderMinutes > 0 && !task.ReminderNotificationSent)
                     {
                         var reminderThreshold = TimeSpan.FromMinutes(task.ReminderMinutes);
-                        if (timeUntilDue <= reminderThreshold && timeUntilDue > TimeSpan.Zero)
+                        // Напоминание должно прийти, когда осталось меньше или равно N минут до дедлайна
+                        // но больше нуля (чтобы не отправлять после дедлайна)
+                        // Даем запас в 10 секунд, чтобы не пропустить напоминание
+                        if (timeUntilDue <= reminderThreshold && timeUntilDue > TimeSpan.FromSeconds(-10))
                         {
+                            Debug.WriteLine($"Sending reminder for task: {task.Title}, reminder in {task.ReminderMinutes} min, time until due: {timeUntilDue.TotalMinutes:F2} min");
+                            
                             _notificationService.ShowNotification(
                                 "Task Scheduler",
                                 $"Напоминание: {task.Title} через {task.ReminderMinutes} мин.");
@@ -95,24 +108,31 @@ namespace Task_Scheduler.Services
                     }
 
                     // Основное уведомление о наступлении дедлайна
-                    if (task.DueNotificationSent) continue;
-                    if (now >= dueDateTime.Value)
+                    if (!task.DueNotificationSent)
                     {
-                        _notificationService.ShowNotification(
-                            "Task Scheduler",
-                            $"Время выполнения задачи: {task.Title}");
-
-                        task.DueNotificationSent = true;
-                        _taskService.UpdateTask(task);
-
-                        // Для повторяющихся задач: создать следующее вхождение
-                        if (task.IsRecurring && task.Recurrence != RecurrenceType.None)
+                        // Уведомление приходит, когда текущее время >= времени дедлайна
+                        // Проверяем, что дедлайн уже наступил или наступит в ближайшие 10 секунд
+                        var timeDifference = (now - dueDateTime.Value).TotalSeconds;
+                        if (timeDifference >= -10 && timeDifference <= 300) // От -10 секунд до +5 минут от дедлайна
                         {
-                            CreateNextRecurrence(task);
-                        }
+                            Debug.WriteLine($"Sending due notification for task: {task.Title} at {now:HH:mm:ss}, due: {dueDateTime.Value:HH:mm:ss}");
+                            
+                            _notificationService.ShowNotification(
+                                "Task Scheduler",
+                                $"Время выполнения задачи: {task.Title}");
 
-                        Microsoft.Maui.Controls.Application.Current?.Dispatcher.Dispatch(() =>
-                            NotificationSent?.Invoke(this, EventArgs.Empty));
+                            task.DueNotificationSent = true;
+                            _taskService.UpdateTask(task);
+
+                            // Для повторяющихся задач: создать следующее вхождение
+                            if (task.IsRecurring && task.Recurrence != RecurrenceType.None)
+                            {
+                                CreateNextRecurrence(task);
+                            }
+
+                            Microsoft.Maui.Controls.Application.Current?.Dispatcher.Dispatch(() =>
+                                NotificationSent?.Invoke(this, EventArgs.Empty));
+                        }
                     }
                 }
             }

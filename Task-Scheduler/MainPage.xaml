@@ -6,12 +6,90 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackLayout Grid.Row="0" 
+        <!-- Верхняя панель с кнопками -->
+        <Grid Grid.Row="0" 
+              RowDefinitions="Auto"
+              ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto,Auto,Auto"
+              Padding="20,10"
+              HorizontalOptions="Fill"
+              VerticalOptions="Start">
+            
+            <!-- Левая группа кнопок -->
+            <StackLayout Grid.Column="0" 
+                         Orientation="Horizontal" 
+                         Spacing="10"
+                         VerticalOptions="Center">
+                <ImageButton x:Name="MenuImageButton"
+                             Source="menu.png"
+                             WidthRequest="40"
+                             HeightRequest="40"
+                             CornerRadius="5"
+                             ToolTipProperties.Text="Меню"
+                             Clicked="OnMenuClicked" />
+                
+                <ImageButton x:Name="LogoImageButton"
+                             Source="logo.png"
+                             WidthRequest="40"
+                             HeightRequest="40"
+                             CornerRadius="5"
+                             Clicked="OnAvatarClicked" />
+                
+                <Label Text="Task Scheduler" 
+                       FontSize="24" 
+                       VerticalOptions="Center" />
+            </StackLayout>
+
+            <!-- Правая группа кнопок -->
+            <StackLayout Grid.Column="7" 
+                         Orientation="Horizontal" 
+                         Spacing="10"
+                         HorizontalOptions="End"
+                         VerticalOptions="Center">
+              
+                              
+                
+                <ImageButton x:Name="FavoritesImageButton"
+                             Source="favorites.png"
+                             WidthRequest="40"
+                             HeightRequest="40"
+                             CornerRadius="5"
+                             ToolTipProperties.Text="Избранное"
+                             Clicked="OnFavoritesClicked" />
+                
+                <ImageButton x:Name="NotificationsImageButton"
+                             Source="notifications.png"
+                             WidthRequest="40"
+                             HeightRequest="40"
+                             CornerRadius="5"
+                             ToolTipProperties.Text="Уведомления"
+                             Clicked="OnNotificationsClicked" />
+                
+                <ImageButton x:Name="SettingsImageButton"
+                             Source="setting.png"
+                             WidthRequest="40"
+                             HeightRequest="40"
+                             CornerRadius="5"
+                             ToolTipProperties.Text="Настройки"
+                             Clicked="OnSettingsClicked" />
+                
+                <ImageButton x:Name="AvatarImageButton"
+                             Source="avatar.png"
+                             WidthRequest="40"
+                             HeightRequest="40"
+                             CornerRadius="5"
+                             ToolTipProperties.Text="Профиль"
+                             Clicked="OnAvatarClicked" />
+            </StackLayout>
+        </Grid>
+
+        <!-- Область с заголовком и кнопками создания задачи -->
+        <StackLayout Grid.Row="1" 
                      Orientation="Vertical"
-                     Padding="20">
+                     Padding="20,10">
             <Label x:Name="TasksLabel"
                    Text="Задачи" 
                    FontSize="28"
@@ -55,15 +133,14 @@
 
         </StackLayout>
 
-        <Frame Grid.Row="1"
+        <!-- Контейнер для задач -->
+        <Frame Grid.Row="2"
                BackgroundColor="White"
                HasShadow="True"
                CornerRadius="0"
                Padding="20"
-               WidthRequest="900"
-               HeightRequest="900"
-               HorizontalOptions="Center"
-               VerticalOptions="Center"
+               HorizontalOptions="Fill"
+               VerticalOptions="Fill"
                Margin="20,0">
             <ScrollView Orientation="Vertical">
                 <StackLayout x:Name="TasksContainer" 
@@ -72,120 +149,29 @@
             </ScrollView>
         </Frame>
 
-        <!-- "Task Scheduler" в левом верхнем углу -->
-        <Label Text="Task Scheduler" 
-               FontSize="24" 
-               HorizontalOptions="Start"
-               VerticalOptions="Start"
-               Margin="130,10,0,0" />
-
-        <!-- Аватар и кнопка редактирования в правом верхнем углу -->
-        <ImageButton x:Name="AvatarImageButton"
-                     Source="avatar.png"
-                     WidthRequest="40"
-                     HeightRequest="40"
-                     CornerRadius="5"
-                     HorizontalOptions="End"
-                     VerticalOptions="Start"
-                     Margin="0,0,10,0"
-                     ToolTipProperties.Text="Профиль"
-                     Clicked="OnAvatarClicked" />
-
-        
-        <!-- Кнопка настроек -->
-        <ImageButton x:Name="SettingsImageButton"
-                     Source="setting.png"
-                     WidthRequest="40"
-                     HeightRequest="40"
-                     CornerRadius="5"
-                     HorizontalOptions="End"
-                     VerticalOptions="Start"
-                     Margin="0,0,70,0"
-                     ToolTipProperties.Text="Настройки"
-                     Clicked="OnSettingsClicked" />
-
-        <ImageButton x:Name="NotificationsImageButton"
-                     Source="notifications.png"
-                     WidthRequest="40"
-                     HeightRequest="40"
-                     CornerRadius="5"
-                     HorizontalOptions="End"
-                     VerticalOptions="Start"
-                     Margin="0,0,130,0"
-                     ToolTipProperties.Text="Уведомления"
-                     Clicked="OnNotificationsClicked" />
-        
-        <ImageButton x:Name="FavoritesImageButton"
-                     Source="favorites.png"
-                     WidthRequest="40"
-                     HeightRequest="40"
-                     CornerRadius="5"
-                     HorizontalOptions="End"
-                     VerticalOptions="Start"
-                     Margin="0,0,190,0"
-                     ToolTipProperties.Text="Избранное"
-                     Clicked="OnFavoritesClicked" />
-
-        <ImageButton x:Name="LogoImageButton"
-                     Source="logo.png"
-                     WidthRequest="40"
-                     HeightRequest="40"
-                     CornerRadius="5"
-                     HorizontalOptions="Start"
-                     VerticalOptions="Start"
-                     Margin="80,0,0,0"                  
-                     Clicked="OnAvatarClicked" />
-
-        <ImageButton x:Name="MenuImageButton"
-                     Source="menu.png"
-                     WidthRequest="40"
-                     HeightRequest="40"
-                     CornerRadius="5"
-                     HorizontalOptions="Start"
-                     VerticalOptions="Start"
-                     Margin="20,0,0,0"
-                     ToolTipProperties.Text="Меню"
-                     Clicked="OnMenuClicked" />
-        
-        <ImageButton x:Name="RefreshImageButton"
-                     Source="refresh.png"
-                     WidthRequest="40"
-                     HeightRequest="40"
-                     CornerRadius="5"
-                     HorizontalOptions="Start"
-                     VerticalOptions="Start"
-                     Margin="20,60,0,0"
-                     ToolTipProperties.Text="Обновить"
-                     Clicked="OnRefreshClicked" />
-
-        <ImageButton x:Name="SortImageButton"
-                     Source="sort.png"
-                     WidthRequest="40"
-                     HeightRequest="40"
-                     CornerRadius="5"
-                     HorizontalOptions="Start"
-                     VerticalOptions="Start"
-                     Margin="20,120,0,0"
-                     ToolTipProperties.Text="Сортировка"
-                     Clicked="OnSortClicked" />
 
         <!-- Выдвигающееся меню -->
         <Grid x:Name="MenuOverlay"
-              IsVisible="False"
-              Opacity="0">
+              Grid.RowSpan="3"
+              BackgroundColor="Black"
+              Opacity="0"
+              IsVisible="False">
             <Grid.GestureRecognizers>
                 <TapGestureRecognizer Tapped="OnMenuOverlayTapped" />
             </Grid.GestureRecognizers>
         </Grid>
 
         <Frame x:Name="SideMenu"
+               Grid.RowSpan="3"
                BackgroundColor="White"
                HasShadow="True"
                CornerRadius="0"
                Padding="20"
                WidthRequest="250"
+               MaximumWidthRequest="300"
+               MinimumWidthRequest="200"
                HorizontalOptions="Start"
-               VerticalOptions="Start"
+               VerticalOptions="Fill"
                TranslationX="-250"
                IsVisible="True">
             <StackLayout Spacing="15" VerticalOptions="Start">
@@ -240,7 +226,7 @@
                     <Image Source="sort.png"
                            WidthRequest="30"
                            HeightRequest="30" />
-                    <Label Text="Сегодня"
+                    <Label Text="Сортировка"
                            FontSize="16"
                            VerticalOptions="Center" />
                 </StackLayout>
@@ -276,17 +262,37 @@
             </StackLayout>
         </Frame>
 
-        <!-- Панель настроек -->
-        <Frame x:Name="SettingsPanel"
-               BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
-               HasShadow="True"
-               CornerRadius="10"
-               Padding="15"
-               WidthRequest="280"
-               HorizontalOptions="End"
-               VerticalOptions="Start"
-               Margin="0,60,10,0"
-               IsVisible="False">
+        <!-- Панель настроек (поверх всего контента) -->
+        <Grid Grid.RowSpan="3"
+              ZIndex="999"
+              IsVisible="False"
+              Opacity="0"
+              x:Name="SettingsOverlay">
+            <!-- Затемненный фон (кликабельный для закрытия) -->
+            <BoxView BackgroundColor="Black" 
+                     Opacity="0.3"
+                     InputTransparent="False">
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnSettingsOverlayTapped" />
+                </BoxView.GestureRecognizers>
+            </BoxView>
+            
+            <!-- Панель настроек -->
+            <Frame x:Name="SettingsPanel"
+                   BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
+                   HasShadow="True"
+                   CornerRadius="10"
+                   Padding="15"
+                   WidthRequest="280"
+                   MaximumWidthRequest="350"
+                   IsVisible="False"
+                   Opacity="0"
+                   Scale="1"
+                   TranslationX="0"
+                   InputTransparent="False"
+                   HorizontalOptions="End"
+                   VerticalOptions="Start"
+                   Margin="10,60,10,0">
             <ScrollView MaximumHeightRequest="420">
                 <StackLayout Spacing="16">
                     <Label Text="Настройки"
@@ -367,6 +373,10 @@
                                 HorizontalOptions="EndAndExpand"
                                 Toggled="OnSettingsNotificationsToggled" />
                     </StackLayout>
+                    <Label Text="Уведомления включены по умолчанию. Вы можете отключить их здесь."
+                           FontSize="11"
+                           TextColor="{AppThemeBinding Light=#666666, Dark=#B0B0B0}"
+                           Margin="0,0,0,5" />
                     <Label Text="Тихие часы (не показывать уведомления):"
                            FontSize="12"
                            TextColor="{AppThemeBinding Light=#666666, Dark=#B0B0B0}" />
@@ -388,30 +398,42 @@
                     </Grid>
                 </StackLayout>
             </ScrollView>
-        </Frame>
+            </Frame>
+        </Grid>
 
         <!-- Панель уведомлений в отдельном слое (не влияет на layout основного контента) -->
-        <AbsoluteLayout x:Name="NotificationsOverlay"
-                        Grid.RowSpan="2" 
-                        ZIndex="1000" 
-                        InputTransparent="True"
-                        HorizontalOptions="Fill"
-                        VerticalOptions="Fill">
-            <AbsoluteLayout.GestureRecognizers>
+        <Grid Grid.RowSpan="3" 
+              ZIndex="1001"
+              IsVisible="False"
+              Opacity="0"
+              x:Name="NotificationsOverlay">
+            <Grid.GestureRecognizers>
                 <TapGestureRecognizer Tapped="OnNotificationsOverlayTapped" />
-            </AbsoluteLayout.GestureRecognizers>
+            </Grid.GestureRecognizers>
+            
+            <!-- Затемненный фон -->
+            <BoxView BackgroundColor="Black" 
+                     Opacity="0.3"
+                     InputTransparent="True" />
+            
+            <!-- Панель уведомлений -->
             <Frame x:Name="NotificationsPanel"
                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"
                    HasShadow="True"
                    CornerRadius="10"
                    Padding="15"
                    WidthRequest="350"
+                   MaximumWidthRequest="400"
                    HeightRequest="500"
+                   MaximumHeightRequest="600"
                    IsVisible="False"
                    Opacity="0"
+                   Scale="1"
+                   TranslationX="0"
                    InputTransparent="False"
-                   AbsoluteLayout.LayoutBounds="0.95,60,350,500"
-                   AbsoluteLayout.LayoutFlags="XProportional">
+                   HorizontalOptions="End"
+                   VerticalOptions="Start"
+                   Margin="10,60,10,0">
                 <StackLayout Spacing="10">
                     <Label Text="Уведомления"
                            FontSize="18"
@@ -424,7 +446,7 @@
                     </ScrollView>
                 </StackLayout>
             </Frame>
-        </AbsoluteLayout>
+        </Grid>
     </Grid>
    
 </ContentPage>
