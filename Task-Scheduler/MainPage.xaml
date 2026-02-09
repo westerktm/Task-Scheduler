@@ -52,6 +52,7 @@
                         Clicked="OnPlusImageButtonClicked" 
                         ToolTipProperties.Text="Создать задачу"
                         Margin="0,0,0,0"/>
+
         </StackLayout>
 
         <Frame Grid.Row="1"
@@ -78,17 +79,18 @@
                VerticalOptions="Start"
                Margin="130,10,0,0" />
 
-        <!-- Аватар в правом верхнем углу -->
+        <!-- Аватар и кнопка редактирования в правом верхнем углу -->
         <ImageButton x:Name="AvatarImageButton"
-                    Source="avatar.png"
-                    WidthRequest="40"
-                    HeightRequest="40"
-                    CornerRadius="5"
-                    HorizontalOptions="End"
-                    VerticalOptions="Start"
-                    Margin="0,0,10,0"
-                    ToolTipProperties.Text="Профиль"
-                    Clicked="OnAvatarClicked" />
+                     Source="avatar.png"
+                     WidthRequest="40"
+                     HeightRequest="40"
+                     CornerRadius="5"
+                     HorizontalOptions="End"
+                     VerticalOptions="Start"
+                     Margin="0,0,10,0"
+                     ToolTipProperties.Text="Профиль"
+                     Clicked="OnAvatarClicked" />
+
         
         <!-- Кнопка настроек -->
         <ImageButton x:Name="SettingsImageButton"
@@ -326,6 +328,19 @@
                             </x:Array>
                         </Picker.ItemsSource>
                     </Picker>
+
+                    <Picker x:Name="SettingsFontPicker"
+                            Title="Шрифт"
+                            SelectedIndexChanged="OnSettingsFontChanged">
+                        <Picker.ItemsSource>
+                            <x:Array Type="{x:Type x:String}">
+                                <x:String>Системный</x:String>
+                                <x:String>OpenSans Regular</x:String>
+                                <x:String>OpenSans Semibold</x:String>
+                            </x:Array>
+                        </Picker.ItemsSource>
+                    </Picker>
+
                     <Picker x:Name="SettingsAccentPicker"
                             Title="Акцент"
                             SelectedIndexChanged="OnSettingsAccentChanged">

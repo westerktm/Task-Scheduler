@@ -8,6 +8,26 @@ namespace Task_Scheduler
         public App()
         {
             InitializeComponent();
+
+            // Apply persisted settings early (fonts/accent/theme)
+            AppSettings.ApplyToResources(Current.Resources);
+            ApplySavedTheme();
+        }
+
+        private void ApplySavedTheme()
+        {
+            switch (AppSettings.AppTheme)
+            {
+                case AppSettings.ThemeDark:
+                    UserAppTheme = AppTheme.Dark;
+                    break;
+                case AppSettings.ThemeLight:
+                    UserAppTheme = AppTheme.Light;
+                    break;
+                default:
+                    UserAppTheme = AppTheme.Unspecified; // system
+                    break;
+            }
         }
 
         protected override Window CreateWindow(IActivationState? activationState)

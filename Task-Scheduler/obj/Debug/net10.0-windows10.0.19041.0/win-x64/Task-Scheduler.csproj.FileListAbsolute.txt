@@ -532,3 +532,5 @@ C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-wind
 C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\obj\Debug\net10.0-windows10.0.19041.0\win-x64\Task-Scheduler.sourcelink.json
 C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-windows10.0.19041.0\win-x64\notificationsalert.scale-100.png
 C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\notificationsalert.scale-100.png
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-windows10.0.19041.0\win-x64\edit.scale-100.png
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\edit.scale-100.png

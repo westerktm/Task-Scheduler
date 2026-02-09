@@ -259,7 +259,7 @@
             <Button Text="Сохранить"
                     Clicked="OnSaveButtonClicked"
                     Grid.Row="23"
-                    BackgroundColor="#512BD4"
+                    BackgroundColor="{AppThemeBinding Light={DynamicResource AccentLight}, Dark={DynamicResource AccentDark}}"
                     TextColor="White"
                     CornerRadius="8"
                     Padding="20,10"

@@ -1,7 +1,10 @@
+using Microsoft.Maui.Graphics;
+using Microsoft.Maui.Storage;
+
 namespace Task_Scheduler.Services
 {
     /// <summary>
-    /// Хранит и загружает настройки приложения (Preferences).
+    /// Хранит и загружает настройки приложения (Preferences) и помогает применить их к ресурсам.
     /// </summary>
     public static class AppSettings
     {
@@ -11,6 +14,8 @@ namespace Task_Scheduler.Services
         private const string KeyQuietHoursStart = "QuietHoursStart"; // "HH:mm"
         private const string KeyQuietHoursEnd = "QuietHoursEnd";     // "HH:mm"
         private const string KeyAccentColor = "AccentColor";         // имя цвета для типов задач
+        private const string KeyFontFamily = "FontFamily";           // "" | "OpenSansRegular" | "OpenSansSemibold"
+        private const string KeyAvatarPath = "AvatarPath";           // путь к выбранному аватару
 
         public const string DisplayModeList = "List";
         public const string DisplayModeKanban = "Kanban";
@@ -57,6 +62,44 @@ namespace Task_Scheduler.Services
         {
             get => Preferences.Default.Get(KeyAccentColor, "Primary");
             set => Preferences.Default.Set(KeyAccentColor, value);
+        }
+
+        /// <summary>
+        /// "" означает системный шрифт.
+        /// </summary>
+        public static string FontFamily
+        {
+            get => Preferences.Default.Get(KeyFontFamily, "");
+            set => Preferences.Default.Set(KeyFontFamily, value ?? "");
+        }
+
+        public static string AvatarPath
+        {
+            get => Preferences.Default.Get(KeyAvatarPath, "");
+            set => Preferences.Default.Set(KeyAvatarPath, value ?? "");
+        }
+
+        public static (Color light, Color dark) GetAccentColors()
+        {
+            // Пары: Light / Dark (для тёмной темы берём более светлый вариант)
+            return AccentColor switch
+            {
+                "Blue" => (Color.FromArgb("#0D6EFD"), Color.FromArgb("#8FB8FF")),
+                "Green" => (Color.FromArgb("#198754"), Color.FromArgb("#7DDC9F")),
+                "Orange" => (Color.FromArgb("#FD7E14"), Color.FromArgb("#FFB066")),
+                _ => (Color.FromArgb("#512BD4"), Color.FromArgb("#ac99ea")), // Primary (фиолетовый)
+            };
+        }
+
+        public static void ApplyToResources(ResourceDictionary resources)
+        {
+            // Font
+            resources["AppFontFamily"] = string.IsNullOrWhiteSpace(FontFamily) ? null : FontFamily;
+
+            // Accent
+            var (light, dark) = GetAccentColors();
+            resources["AccentLight"] = light;
+            resources["AccentDark"] = dark;
         }
 
         /// <summary>Проверяет, попадает ли текущее время в тихие часы (не показывать уведомления).</summary>

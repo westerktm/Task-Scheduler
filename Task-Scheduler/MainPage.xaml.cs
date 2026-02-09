@@ -23,12 +23,63 @@ namespace Task_Scheduler
             _displayMode = AppSettings.DefaultDisplayMode;
 
             UpdateNotificationIcon();
+            LoadAvatar();
         }
 
-        private void OnAvatarClicked(object sender, EventArgs e)
+        private async void OnAvatarClicked(object sender, EventArgs e)
         {
-            // Обработчик клика по аватару
-            // Здесь можно добавить логику, например, открыть меню профиля
+            // Открываем страницу профиля, при этом MainPage и все её кнопки/иконки остаются в стеке навигации
+            await Shell.Current.GoToAsync(nameof(ProfilePage));
+        }
+
+        private async void OnEditAvatarClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                var result = await FilePicker.Default.PickAsync(new PickOptions
+                {
+                    PickerTitle = "Выберите изображение для аватара",
+                    FileTypes = FilePickerFileType.Images
+                });
+
+                if (result == null)
+                    return;
+
+                var ext = Path.GetExtension(result.FileName);
+                if (string.IsNullOrWhiteSpace(ext))
+                    ext = ".png";
+
+                var targetPath = Path.Combine(FileSystem.AppDataDirectory, "avatar" + ext);
+
+                await using (var sourceStream = await result.OpenReadAsync())
+                await using (var targetStream = File.Open(targetPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    await sourceStream.CopyToAsync(targetStream);
+                }
+
+                AppSettings.AvatarPath = targetPath;
+                LoadAvatar();
+            }
+            catch
+            {
+                // Игнорируем ошибки выбора/копирования файла
+            }
+        }
+
+        private void LoadAvatar()
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(AppSettings.AvatarPath) &&
+                    File.Exists(AppSettings.AvatarPath))
+                {
+                    AvatarImageButton.Source = ImageSource.FromFile(AppSettings.AvatarPath);
+                }
+            }
+            catch
+            {
+                // Игнорируем ошибки чтения
+            }
         }
 
         private async void OnNotificationsClicked(object sender, EventArgs e)
@@ -361,6 +412,14 @@ namespace Task_Scheduler
                 _ => 0
             };
 
+            var font = AppSettings.FontFamily;
+            SettingsFontPicker.SelectedIndex = font switch
+            {
+                "OpenSansRegular" => 1,
+                "OpenSansSemibold" => 2,
+                _ => 0 // system
+            };
+
             var accent = AppSettings.AccentColor;
             SettingsAccentPicker.SelectedIndex = accent switch { "Blue" => 1, "Green" => 2, "Orange" => 3, _ => 0 };
 
@@ -397,6 +456,19 @@ namespace Task_Scheduler
             ApplySavedTheme();
         }
 
+        private void OnSettingsFontChanged(object? sender, EventArgs e)
+        {
+            if (SettingsFontPicker.SelectedIndex < 0) return;
+            var font = SettingsFontPicker.SelectedIndex switch
+            {
+                1 => "OpenSansRegular",
+                2 => "OpenSansSemibold",
+                _ => ""
+            };
+            AppSettings.FontFamily = font;
+            AppSettings.ApplyToResources(Application.Current!.Resources);
+        }
+
         private void OnSettingsAccentChanged(object? sender, EventArgs e)
         {
             if (SettingsAccentPicker.SelectedIndex < 0) return;
@@ -408,6 +480,7 @@ namespace Task_Scheduler
                 _ => "Primary"
             };
             AppSettings.AccentColor = accent;
+            AppSettings.ApplyToResources(Application.Current!.Resources);
         }
 
         private void OnSettingsNotificationsToggled(object? sender, ToggledEventArgs e)
@@ -622,7 +695,10 @@ namespace Task_Scheduler
             if (button == null) return;
 
             // Подсвечиваем кнопку при нажатии (активное состояние)
-            button.BackgroundColor = Color.FromArgb("#512BD4");
+            var (accentLight, accentDark) = AppSettings.GetAccentColors();
+            var isDark = Application.Current?.RequestedTheme == AppTheme.Dark ||
+                         Application.Current?.UserAppTheme == AppTheme.Dark;
+            button.BackgroundColor = isDark ? accentDark : accentLight;
             button.TextColor = Colors.White;
         }
 
@@ -769,6 +845,7 @@ namespace Task_Scheduler
             CreateTaskButton.IsVisible = false;
             PlusImageButton.IsVisible = true;
 
+            // Рендерим задачи в зависимости от режима отображения
             switch (_displayMode)
             {
                 case "Kanban":
@@ -789,6 +866,7 @@ namespace Task_Scheduler
                     break;
             }
         }
+
 
         private void RenderKanbanView(List<TaskItem> tasks)
         {
