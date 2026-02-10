@@ -34,11 +34,11 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-          
+
             <Entry x:Name="TaskTitleEntry"
                    Placeholder="Название задачи"
                    Grid.Row="1"
-                   Margin="0,0,0,15"
+                   Margin="0,0,0,5"
                    HorizontalOptions="Fill" />
 
             <!-- Описание задачи -->

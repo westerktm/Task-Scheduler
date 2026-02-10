@@ -11,6 +11,9 @@ namespace Task_Scheduler
         {
             InitializeComponent();
             LoadAvatar();
+            UserNameLabel.Text = string.IsNullOrWhiteSpace(AppSettings.CurrentUserName)
+                ? "Гость"
+                : AppSettings.CurrentUserName;
             _currentChartType = AppSettings.ProfileChartType;
             RenderCurrentChart();
         }
@@ -19,6 +22,9 @@ namespace Task_Scheduler
         {
             base.OnAppearing();
             LoadAvatar();
+            UserNameLabel.Text = string.IsNullOrWhiteSpace(AppSettings.CurrentUserName)
+                ? "Гость"
+                : AppSettings.CurrentUserName;
             RenderCurrentChart();
         }
 

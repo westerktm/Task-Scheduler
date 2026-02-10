@@ -33,7 +33,8 @@ namespace Task_Scheduler
         protected override Window CreateWindow(IActivationState? activationState)
         {
             TaskNotificationScheduler.Start();
-            return new Window(new AppShell());
+            // Стартуем с экрана логина, внутри которого уже решаем, показывать ли основную оболочку
+            return new Window(new LoginPage());
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+using Task_Scheduler.Services;
 
 namespace Task_Scheduler
 {
@@ -14,6 +16,10 @@ namespace Task_Scheduler
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
+
+            // DI сервисы
+            builder.Services.AddSingleton<DatabaseService>();
+            builder.Services.AddSingleton<AuthService>();
 
 #if DEBUG
     		builder.Logging.AddDebug();

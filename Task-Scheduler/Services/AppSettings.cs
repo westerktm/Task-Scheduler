@@ -17,6 +17,8 @@ namespace Task_Scheduler.Services
         private const string KeyFontFamily = "FontFamily";           // "" | "OpenSansRegular" | "OpenSansSemibold"
         private const string KeyAvatarPath = "AvatarPath";           // путь к выбранному аватару
         private const string KeyProfileChartType = "ProfileChartType"; // "Line" | "Donut" | "Heatmap" | "Bar"
+        private const string KeyCurrentUserId = "CurrentUserId";
+        private const string KeyCurrentUserName = "CurrentUserName";
 
         public const string DisplayModeList = "List";
         public const string DisplayModeKanban = "Kanban";
@@ -84,6 +86,20 @@ namespace Task_Scheduler.Services
         {
             get => Preferences.Default.Get(KeyProfileChartType, "Line");
             set => Preferences.Default.Set(KeyProfileChartType, value ?? "Line");
+        }
+
+        /// <summary>Id текущего пользователя (для автологина).</summary>
+        public static int CurrentUserId
+        {
+            get => Preferences.Default.Get(KeyCurrentUserId, 0);
+            set => Preferences.Default.Set(KeyCurrentUserId, value);
+        }
+
+        /// <summary>Имя текущего пользователя (для отображения в UI).</summary>
+        public static string CurrentUserName
+        {
+            get => Preferences.Default.Get(KeyCurrentUserName, string.Empty);
+            set => Preferences.Default.Set(KeyCurrentUserName, value ?? string.Empty);
         }
 
         public static (Color light, Color dark) GetAccentColors()

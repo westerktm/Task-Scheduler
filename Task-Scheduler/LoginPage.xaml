@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Task_Scheduler.LoginPage"
+             Title="Вход">
+
+    <ContentPage.Content>
+        <Grid Padding="24"
+              BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource OffBlack}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <StackLayout Grid.Row="0"
+                         Spacing="12"
+                         HorizontalOptions="Center"
+                         Margin="0,40,0,20">
+                <Image Source="logo.png"
+                       WidthRequest="80"
+                       HeightRequest="80"
+                       HorizontalOptions="Center" />
+                <Label Text="Task Scheduler"
+                       FontSize="26"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                <Label Text="Войдите в аккаунт или создайте новый"
+                       FontSize="14"
+                       HorizontalOptions="Center"
+                       TextColor="{AppThemeBinding Light=Gray, Dark=#CFCFCF}" />
+            </StackLayout>
+
+            <Frame Grid.Row="1"
+                   Padding="20"
+                   CornerRadius="16"
+                   HasShadow="True"
+                   BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}">
+                <StackLayout Spacing="16">
+                    <Entry x:Name="UserNameEntry"
+                           Placeholder="Логин"
+                           Keyboard="Text"
+                           HorizontalOptions="Fill" />
+
+                    <Entry x:Name="PasswordEntry"
+                           Placeholder="Пароль"
+                           IsPassword="True"
+                           HorizontalOptions="Fill" />
+
+                    <Label x:Name="ErrorLabel"
+                           TextColor="Red"
+                           FontSize="12"
+                           IsVisible="False" />
+
+                    <Button Text="Войти"
+                            x:Name="LoginButton"
+                            Clicked="OnLoginClicked"
+                            BackgroundColor="{AppThemeBinding Light={DynamicResource AccentLight}, Dark={DynamicResource AccentDark}}"
+                            TextColor="White"
+                            CornerRadius="10"
+                            Padding="20,10" />
+
+                    <Button Text="Зарегистрироваться"
+                            x:Name="RegisterButton"
+                            Clicked="OnRegisterClicked"
+                            BackgroundColor="Transparent"
+                            TextColor="{AppThemeBinding Light={DynamicResource AccentLight}, Dark={DynamicResource AccentDark}}"
+                            BorderColor="{AppThemeBinding Light={DynamicResource AccentLight}, Dark={DynamicResource AccentDark}}"
+                            BorderWidth="1"
+                            CornerRadius="10"
+                            Padding="20,10" />
+                </StackLayout>
+            </Frame>
+        </Grid>
+    </ContentPage.Content>
+</ContentPage>
+

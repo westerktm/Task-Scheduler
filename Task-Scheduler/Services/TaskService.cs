@@ -2,10 +2,21 @@ using Task_Scheduler.Models;
 
 namespace Task_Scheduler.Services
 {
+    /// <summary>
+    /// Сервис работы с задачами. Хранит задачи в SQLite и фильтрует их по текущему пользователю.
+    /// API оставлен синхронным, как было в исходном коде.
+    /// </summary>
     public class TaskService
     {
         private static TaskService? _instance;
-        private List<TaskItem> _tasks = new List<TaskItem>();
+        private static readonly object _lock = new();
+
+        private readonly DatabaseService _databaseService;
+
+        private TaskService()
+        {
+            _databaseService = DatabaseService.Instance;
+        }
 
         public static TaskService Instance
         {
@@ -13,41 +24,96 @@ namespace Task_Scheduler.Services
             {
                 if (_instance == null)
                 {
-                    _instance = new TaskService();
+                    lock (_lock)
+                    {
+                        _instance ??= new TaskService();
+                    }
                 }
                 return _instance;
             }
         }
 
-        public List<TaskItem> GetTasks() => _tasks;
+        private int CurrentUserId => AppSettings.CurrentUserId;
+
+        public List<TaskItem> GetTasks()
+        {
+            try
+            {
+                var userId = CurrentUserId;
+                if (userId <= 0)
+                    return new List<TaskItem>();
+
+                var conn = _databaseService.ConnectionAsync().GetAwaiter().GetResult();
+                var tasks = conn.Table<TaskItem>()
+                    .Where(t => t.UserId == userId)
+                    .ToListAsync()
+                    .GetAwaiter()
+                    .GetResult();
+                return tasks;
+            }
+            catch
+            {
+                return new List<TaskItem>();
+            }
+        }
 
         public void AddTask(TaskItem task)
         {
+            var userId = CurrentUserId;
+            if (userId <= 0)
+                return;
+
+            task.UserId = userId;
             task.CreatedAt = DateTime.Now;
             task.LastUpdated = DateTime.Now;
-            _tasks.Add(task);
+
+            var conn = _databaseService.ConnectionAsync().GetAwaiter().GetResult();
+            conn.InsertAsync(task).GetAwaiter().GetResult();
         }
 
         public void UpdateTask(TaskItem task)
         {
-            var existingTask = _tasks.FirstOrDefault(t => t.Id == task.Id);
-            if (existingTask != null)
-            {
-                var index = _tasks.IndexOf(existingTask);
-                task.LastUpdated = DateTime.Now;
-                _tasks[index] = task;
-            }
+            var userId = CurrentUserId;
+            if (userId <= 0)
+                return;
+
+            task.UserId = userId;
+            task.LastUpdated = DateTime.Now;
+
+            var conn = _databaseService.ConnectionAsync().GetAwaiter().GetResult();
+            conn.UpdateAsync(task).GetAwaiter().GetResult();
         }
 
         public void DeleteTask(string taskId)
         {
-            var task = _tasks.FirstOrDefault(t => t.Id == taskId);
+            var userId = CurrentUserId;
+            if (userId <= 0)
+                return;
+
+            var conn = _databaseService.ConnectionAsync().GetAwaiter().GetResult();
+            var task = conn.Table<TaskItem>()
+                .FirstOrDefaultAsync(t => t.Id == taskId && t.UserId == userId)
+                .GetAwaiter()
+                .GetResult();
+
             if (task != null)
             {
-                _tasks.Remove(task);
+                conn.DeleteAsync(task).GetAwaiter().GetResult();
             }
         }
 
-        public TaskItem? GetTaskById(string taskId) => _tasks.FirstOrDefault(t => t.Id == taskId);
+        public TaskItem? GetTaskById(string taskId)
+        {
+            var userId = CurrentUserId;
+            if (userId <= 0)
+                return null;
+
+            var conn = _databaseService.ConnectionAsync().GetAwaiter().GetResult();
+            var task = conn.Table<TaskItem>()
+                .FirstOrDefaultAsync(t => t.Id == taskId && t.UserId == userId)
+                .GetAwaiter()
+                .GetResult();
+            return task;
+        }
     }
 }

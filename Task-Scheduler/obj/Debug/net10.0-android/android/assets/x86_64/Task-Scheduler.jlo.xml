@@ -1,0 +1,15 @@
+<api>
+  <jcw-types>
+    <type name="MainActivity" package="crc64abd19c7ba1be253f" application_java_class="android.app.Application" mono_runtime_initialization="mono.MonoPackageManager.LoadApplication (context);" extends_type="crc6488302ad6e9e4df1a.MauiAppCompatActivity" partial_assembly_qualified_name="Task_Scheduler.MainActivity, Task-Scheduler">
+      <constructors>
+        <constructor name="MainActivity" method="n_.ctor:()V:" jni_signature="()V" managed_parameters="" retval="void" is_dynamically_registered="True" />
+        <constructor name="MainActivity" method="n_.ctor:(I)V:" jni_signature="(I)V" managed_parameters="System.Int32, System.Private.CoreLib" params="int p0" retval="void" is_dynamically_registered="True" super_call="p0" activate_call="p0" />
+      </constructors>
+    </type>
+    <type name="MainApplication" package="crc64abd19c7ba1be253f" application_java_class="android.app.Application" mono_runtime_initialization="mono.MonoPackageManager.LoadApplication (context);" extends_type="crc6488302ad6e9e4df1a.MauiApplication" is_application="True" partial_assembly_qualified_name="Task_Scheduler.MainApplication, Task-Scheduler" application_constructor="MainApplication" />
+  </jcw-types>
+  <acw-types partial-assembly-name="Task-Scheduler" module-name="Task-Scheduler.dll">
+    <type assembly-qualified-name="Task_Scheduler.MainActivity, Task-Scheduler, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" compat-jni-name="task_scheduler.MainActivity" java-key="crc64abd19c7ba1be253f.MainActivity" managed-key="Task_Scheduler.MainActivity" partial-assembly-qualified-name="Task_Scheduler.MainActivity, Task-Scheduler" />
+    <type assembly-qualified-name="Task_Scheduler.MainApplication, Task-Scheduler, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" compat-jni-name="task_scheduler.MainApplication" java-key="crc64abd19c7ba1be253f.MainApplication" managed-key="Task_Scheduler.MainApplication" partial-assembly-qualified-name="Task_Scheduler.MainApplication, Task-Scheduler" />
+  </acw-types>
+</api>

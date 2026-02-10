@@ -49,7 +49,8 @@
                    HeightRequest="40"
                    HorizontalOptions="Center"
                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}">
-                <Label Text="wester"
+                <Label x:Name="UserNameLabel"
+                       Text=""
                        FontSize="15"
                        TextColor="{AppThemeBinding Light=Black, Dark=White}"
                        HorizontalOptions="Center" />

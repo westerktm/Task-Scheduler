@@ -556,3 +556,9 @@ C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\obj\Debug\net10.0-wind
 C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\refblacktheme.scale-100.png
 C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\settingsblacktheme.scale-100.png
 C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\obj\Debug\net10.0-windows10.0.19041.0\win-x64\resizetizer\r\sortblacktheme.scale-100.png
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-windows10.0.19041.0\win-x64\SQLite-net.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-windows10.0.19041.0\win-x64\SQLitePCLRaw.batteries_v2.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-windows10.0.19041.0\win-x64\SQLitePCLRaw.core.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-windows10.0.19041.0\win-x64\SQLitePCLRaw.provider.e_sqlite3.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-windows10.0.19041.0\win-x64\e_sqlite3.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-windows10.0.19041.0\win-x64\Microsoft.Data.Sqlite.dll

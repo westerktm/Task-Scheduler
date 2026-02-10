@@ -20,6 +20,9 @@ namespace Task_Scheduler.Models
     public class TaskItem
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        /// <summary>Связь с пользователем, которому принадлежит задача.</summary>
+        public int UserId { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public DateTime? DueDate { get; set; }
@@ -49,6 +52,11 @@ namespace Task_Scheduler.Models
         // Помодоро: длительность сессии в минутах (0 = выключено)
         public int PomodoroDurationMinutes { get; set; } = 25;
 
+        /// <summary>
+        /// Список подзадач хранится только в памяти и не маппится напрямую в таблицу SQLite.
+        /// При необходимости его можно вынести в отдельную таблицу.
+        /// </summary>
+        [SQLite.Ignore]
         public List<SubTask> SubTasks { get; set; } = new List<SubTask>();
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime LastUpdated { get; set; } = DateTime.Now;

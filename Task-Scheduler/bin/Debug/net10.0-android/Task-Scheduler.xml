@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Task-Scheduler</name>
+    </assembly>
+    <members>
+        <member name="T:Task_Scheduler.Models.TaskImportance">
+            <summary>Уровень важности задачи</summary>
+        </member>
+        <member name="T:Task_Scheduler.Models.RecurrenceType">
+            <summary>Повторяемость задачи</summary>
+        </member>
+        <member name="P:Task_Scheduler.Models.TaskItem.UserId">
+            <summary>Связь с пользователем, которому принадлежит задача.</summary>
+        </member>
+        <member name="T:Task_Scheduler.Models.User">
+            <summary>Пользователь приложения.</summary>
+        </member>
+        <member name="P:Task_Scheduler.Models.User.PasswordHash">
+            <summary>Храним хэш пароля, а не сам пароль.</summary>
+        </member>
+        <member name="T:Task_Scheduler.Services.AppSettings">
+            <summary>
+            Хранит и загружает настройки приложения (Preferences) и помогает применить их к ресурсам.
+            </summary>
+        </member>
+        <member name="P:Task_Scheduler.Services.AppSettings.QuietHoursStart">
+            <summary>Начало тихих часов, например "22:00".</summary>
+        </member>
+        <member name="P:Task_Scheduler.Services.AppSettings.QuietHoursEnd">
+            <summary>Конец тихих часов, например "08:00".</summary>
+        </member>
+        <member name="P:Task_Scheduler.Services.AppSettings.FontFamily">
+            <summary>
+            "" означает системный шрифт.
+            </summary>
+        </member>
+        <member name="P:Task_Scheduler.Services.AppSettings.CurrentUserId">
+            <summary>Id текущего пользователя (для автологина).</summary>
+        </member>
+        <member name="P:Task_Scheduler.Services.AppSettings.CurrentUserName">
+            <summary>Имя текущего пользователя (для отображения в UI).</summary>
+        </member>
+        <member name="M:Task_Scheduler.Services.AppSettings.IsInQuietHours(System.DateTime)">
+            <summary>Проверяет, попадает ли текущее время в тихие часы (не показывать уведомления).</summary>
+        </member>
+        <member name="T:Task_Scheduler.Services.AuthService">
+            <summary>
+            Простая авторизация: регистрация пользователя и вход по логину/паролю.
+            </summary>
+        </member>
+        <member name="T:Task_Scheduler.Services.DatabaseService">
+            <summary>
+            Отвечает за создание и доступ к единственной базе SQLite.
+            </summary>
+        </member>
+        <member name="T:Task_Scheduler.Services.TaskNotificationScheduler">
+            <summary>
+            Проверяет задачи на наступление времени выполнения и показывает уведомления.
+            На Windows запланированные уведомления не поддерживаются, поэтому используется таймер.
+            </summary>
+        </member>
+        <member name="E:Task_Scheduler.Services.TaskNotificationScheduler.NotificationSent">
+            <summary>
+            Вызывается при отправке уведомления о задаче.
+            </summary>
+        </member>
+        <member name="T:Task_Scheduler.Services.TaskService">
+            <summary>
+            Сервис работы с задачами. Хранит задачи в SQLite и фильтрует их по текущему пользователю.
+            API оставлен синхронным, как было в исходном коде.
+            </summary>
+        </member>
+        <member name="T:Task_Scheduler.Resource">
+            <summary>
+            Android Resource Designer class.
+            Exposes the Android Resource designer assembly into the project Namespace.
+            </summary>
+        </member>
+    </members>
+</doc>
