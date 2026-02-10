@@ -785,6 +785,33 @@ namespace Task_Scheduler
             }
         }
 
+        private async void OnOpenProfileFromSettingsClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync(nameof(ProfilePage));
+        }
+
+        private async void OnDeleteAccountClicked(object sender, EventArgs e)
+        {
+            bool confirm = await DisplayAlert(
+                "Удалить аккаунт",
+                "Все ваши задачи и данные будут удалены. Продолжить?",
+                "Да",
+                "Нет");
+
+            if (!confirm)
+                return;
+
+            var (ok, error) = await AuthService.Instance.DeleteCurrentUserAsync();
+            if (!ok)
+            {
+                await DisplayAlert("Ошибка", error, "OK");
+                return;
+            }
+
+            // Возвращаемся на экран логина
+            Application.Current!.MainPage = new LoginPage();
+        }
+
         private async void OnMenuClicked(object sender, EventArgs e)
         {
             if (_isMenuOpen)

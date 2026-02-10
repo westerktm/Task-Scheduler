@@ -404,6 +404,28 @@
                                    TextChanged="OnQuietHoursChanged" />
                         </StackLayout>
                     </Grid>
+
+                    <!-- 4. Профиль -->
+                    <Label Text="Профиль"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#333333, Dark=#E0E0E0}" />
+
+                    <Button Text="Открыть профиль"
+                            Clicked="OnOpenProfileFromSettingsClicked"
+                            BackgroundColor="#E0E0E0"
+                            TextColor="#333333"
+                            CornerRadius="8"
+                            Padding="15,8"
+                            HorizontalOptions="Fill" />
+
+                    <Button Text="Удалить аккаунт"
+                            Clicked="OnDeleteAccountClicked"
+                            BackgroundColor="#FF5252"
+                            TextColor="White"
+                            CornerRadius="8"
+                            Padding="15,8"
+                            HorizontalOptions="Fill" />
                 </StackLayout>
             </ScrollView>
             </Frame>

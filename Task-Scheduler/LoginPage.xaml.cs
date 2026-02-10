@@ -56,6 +56,13 @@ namespace Task_Scheduler
             await NavigateToMainAsync();
         }
 
+        private async void OnGuestClicked(object sender, EventArgs e)
+        {
+            ErrorLabel.IsVisible = false;
+            await _authService.LoginAsGuestAsync();
+            await NavigateToMainAsync();
+        }
+
         private static async Task NavigateToMainAsync()
         {
             // После логина переключаем MainPage на Shell с основной страницей

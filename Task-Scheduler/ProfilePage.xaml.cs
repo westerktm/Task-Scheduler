@@ -432,8 +432,16 @@ namespace Task_Scheduler
         private async void OnSaveProfileClicked(object sender, EventArgs e)
         {
             // Здесь можно сохранить данные профиля в сервис/хранилище.
-            await DisplayAlert("Профиль", "Изменения профиля сохранены.", "OK");
+            await DisplayAlertAsync("Профиль", "Изменения профиля сохранены.", "OK");
             await Navigation.PopAsync();
+        }
+
+        private async void OnLogoutClicked(object sender, EventArgs e)
+        {
+            // Выход из аккаунта и возврат на экран логина
+            AuthService.Instance.Logout();
+            Application.Current!.MainPage = new LoginPage();
+            await Task.CompletedTask;
         }
     }
 }

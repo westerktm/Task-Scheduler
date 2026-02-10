@@ -69,6 +69,14 @@
                             BorderWidth="1"
                             CornerRadius="10"
                             Padding="20,10" />
+
+                    <Button Text="Войти как гость"
+                            x:Name="GuestButton"
+                            Clicked="OnGuestClicked"
+                            BackgroundColor="Transparent"
+                            TextColor="{AppThemeBinding Light=Gray, Dark=#CFCFCF}"
+                            CornerRadius="10"
+                            Padding="20,10" />
                 </StackLayout>
             </Frame>
         </Grid>
