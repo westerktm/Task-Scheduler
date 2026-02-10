@@ -95,20 +95,26 @@ namespace Task_Scheduler
 
             TaskChartsContainer.Children.Clear();
 
+            // Чтобы графики/подписи корректно выглядели при смене темы
+            var isDark = Application.Current?.RequestedTheme == AppTheme.Dark ||
+                         Application.Current?.UserAppTheme == AppTheme.Dark;
+            var primaryText = isDark ? Colors.White : Colors.Black;
+            var secondaryText = isDark ? Color.FromArgb("#CFCFCF") : Colors.Gray;
+
             var tasks = TaskService.Instance.GetTasks().ToList();
             switch (_currentChartType)
             {
                 case "Donut":
-                    RenderDonutChart(tasks);
+                    RenderDonutChart(tasks, primaryText);
                     break;
                 case "Heatmap":
                     RenderHeatmapChart(tasks);
                     break;
                 case "Bar":
-                    RenderBarChart(tasks);
+                    RenderBarChart(tasks, primaryText);
                     break;
                 default:
-                    RenderLineChart(tasks);
+                    RenderLineChart(tasks, primaryText, secondaryText);
                     break;
             }
         }
@@ -149,7 +155,7 @@ namespace Task_Scheduler
             return (done, overdue, active);
         }
 
-        private void RenderDonutChart(List<TaskItem> tasks)
+        private void RenderDonutChart(List<TaskItem> tasks, Color textColor)
         {
             var (done, overdue, active) = GetTaskStatusCounts(tasks);
             int total = done + overdue + active;
@@ -158,6 +164,7 @@ namespace Task_Scheduler
                 TaskChartsContainer.Children.Add(new Label
                 {
                     Text = "Нет данных для диаграммы",
+                    TextColor = textColor,
                     HorizontalOptions = LayoutOptions.Center,
                     VerticalOptions = LayoutOptions.Center
                 });
@@ -212,7 +219,8 @@ namespace Task_Scheduler
                 {
                     Text = $"{seg.label}\n{seg.value}",
                     FontSize = 11,
-                    HorizontalTextAlignment = TextAlignment.Center
+                    HorizontalTextAlignment = TextAlignment.Center,
+                    TextColor = textColor
                 };
 
                 stack.Children.Add(bar);
@@ -225,7 +233,7 @@ namespace Task_Scheduler
             TaskChartsContainer.Children.Add(grid);
         }
 
-        private void RenderLineChart(List<TaskItem> tasks)
+        private void RenderLineChart(List<TaskItem> tasks, Color primaryText, Color secondaryText)
         {
             var now = DateTime.Today;
             var days = Enumerable.Range(0, 7)
@@ -288,7 +296,8 @@ namespace Task_Scheduler
                 {
                     Text = days[i].ToString("dd.MM"),
                     FontSize = 10,
-                    HorizontalTextAlignment = TextAlignment.Center
+                    HorizontalTextAlignment = TextAlignment.Center,
+                    TextColor = secondaryText
                 };
 
                 colLayout.Children.Add(bars);
@@ -349,7 +358,7 @@ namespace Task_Scheduler
             TaskChartsContainer.Children.Add(grid);
         }
 
-        private void RenderBarChart(List<TaskItem> tasks)
+        private void RenderBarChart(List<TaskItem> tasks, Color textColor)
         {
             int low = tasks.Count(t => t.Importance == TaskImportance.Low);
             int medium = tasks.Count(t => t.Importance == TaskImportance.Medium);
@@ -400,7 +409,8 @@ namespace Task_Scheduler
                 {
                     Text = $"{b.label}\n{b.value}",
                     FontSize = 11,
-                    HorizontalTextAlignment = TextAlignment.Center
+                    HorizontalTextAlignment = TextAlignment.Center,
+                    TextColor = textColor
                 };
 
                 stack.Children.Add(bar);

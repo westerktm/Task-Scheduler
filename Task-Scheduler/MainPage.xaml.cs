@@ -50,6 +50,32 @@ namespace Task_Scheduler
             }
         }
 
+        private static bool IsDarkTheme()
+        {
+            var app = Application.Current;
+            return app?.RequestedTheme == AppTheme.Dark || app?.UserAppTheme == AppTheme.Dark;
+        }
+
+        private static Color TextPrimary(bool isDark) => isDark ? Colors.White : Colors.Black;
+        private static Color TextSecondary(bool isDark) => isDark ? Color.FromArgb("#CFCFCF") : Colors.Gray;
+        private static Color TextAccent(bool isDark) => isDark ? Color.FromArgb("#9DB7FF") : Colors.DarkBlue;
+
+        private static Color TaskCardBgForImportance(TaskImportance importance, bool isDark)
+        {
+            if (!isDark)
+                return GetImportanceBgColor(importance);
+
+            // Тёмная палитра (слегка тонированная под важность)
+            return importance switch
+            {
+                TaskImportance.High => Color.FromArgb("#3A1F1F"),
+                TaskImportance.Low => Color.FromArgb("#1F3A27"),
+                _ => Color.FromArgb("#3A331F")
+            };
+        }
+
+        private static Color TaskCardBgCompleted(bool isDark) => isDark ? Color.FromArgb("#262626") : Colors.White;
+
         private void OnPageSizeChanged(object? sender, EventArgs e)
         {
             UpdateLayoutForSize();
@@ -363,10 +389,18 @@ namespace Task_Scheduler
 
         private Frame CreateNotificationFrame(TaskItem task, DateTime dueDate, string status)
         {
+            var isDark = IsDarkTheme();
+            var primary = TextPrimary(isDark);
+            var secondary = TextSecondary(isDark);
+
             var frame = new Frame
             {
-                BackgroundColor = status == "Текущая задача" ? Color.FromArgb("#E3F2FD") : Color.FromArgb("#E3F2FD"),
-                BorderColor = status == "Текущая задача" ? Colors.Blue : Colors.Blue,
+                BackgroundColor = isDark
+                    ? (status == "Текущая задача" ? Color.FromArgb("#1F2A33") : Color.FromArgb("#202020"))
+                    : Color.FromArgb("#E3F2FD"),
+                BorderColor = isDark
+                    ? Color.FromArgb("#3A3A3A")
+                    : Colors.Blue,
                 CornerRadius = 8,
                 Padding = 12,
                 Margin = new Thickness(0, 0, 0, 8),
@@ -391,7 +425,7 @@ namespace Task_Scheduler
                 Text = task.Title,
                 FontSize = 16,
                 FontAttributes = FontAttributes.Bold,
-                TextColor = Colors.Black
+                TextColor = primary
             };
             Grid.SetColumn(titleLabel, 0);
             headerLayout.Children.Add(titleLabel);
@@ -401,7 +435,7 @@ namespace Task_Scheduler
             {
                 Text = "✕",
                 BackgroundColor = Colors.Transparent,
-                TextColor = Colors.Gray,
+                TextColor = secondary,
                 FontSize = 18,
                 WidthRequest = 30,
                 HeightRequest = 30,
@@ -426,7 +460,7 @@ namespace Task_Scheduler
             {
                 Text = $"{status} • {dueDate:dd.MM.yyyy HH:mm}",
                 FontSize = 12,
-                TextColor = status == "Текущая задача" ? Colors.Black : Colors.Black
+                TextColor = secondary
             };
             mainLayout.Children.Add(statusLabel);
 
@@ -437,7 +471,7 @@ namespace Task_Scheduler
                 {
                     Text = task.Description,
                     FontSize = 12,
-                    TextColor = Colors.Gray,
+                    TextColor = secondary,
                     LineBreakMode = LineBreakMode.WordWrap,
                     MaxLines = 2
                 };
@@ -454,7 +488,22 @@ namespace Task_Scheduler
             var hasUnreadNotifications = TaskService.Instance.GetTasks()
                 .Any(t => (t.DueNotificationSent || t.ReminderNotificationSent) && !t.IsCompleted && !t.NotificationDismissed);
 
-            NotificationsImageButton.Source = hasUnreadNotifications ? "notificationsalert.png" : "notifications.png";
+            // Подбираем иконки в зависимости от темы приложения
+            var isDark = Application.Current?.RequestedTheme == AppTheme.Dark ||
+                         Application.Current?.UserAppTheme == AppTheme.Dark;
+
+            if (hasUnreadNotifications)
+            {
+                NotificationsImageButton.Source = isDark
+                    ? "notificationsalertbt.png"
+                    : "notificationsalert.png";
+            }
+            else
+            {
+                NotificationsImageButton.Source = isDark
+                    ? "notiblacktheme.png"
+                    : "notifications.png";
+            }
         }
 
         private void OnFavoritesClicked(object sender, EventArgs e)
@@ -638,6 +687,14 @@ namespace Task_Scheduler
                 AppSettings.AppTheme = theme;
                 System.Diagnostics.Debug.WriteLine($"Theme changed to: {theme}");
                 ApplySavedTheme();
+
+                // Обновляем элементы, созданные из кода (карточки, тексты, иконка уведомлений)
+                RefreshTasks();
+                UpdateNotificationIcon();
+                if (_isNotificationsOpen)
+                {
+                    RefreshNotifications();
+                }
             }
             catch (Exception ex)
             {
@@ -1106,6 +1163,9 @@ namespace Task_Scheduler
 
         private void RenderKanbanView(List<TaskItem> tasks)
         {
+            var isDark = IsDarkTheme();
+            var primary = TextPrimary(isDark);
+
             var todoTasks = tasks.Where(t => !t.IsCompleted).ToList();
             var doneTasks = tasks.Where(t => t.IsCompleted).ToList();
             var kanbanLayout = new Grid { ColumnSpacing = 15 };
@@ -1113,8 +1173,8 @@ namespace Task_Scheduler
             kanbanLayout.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             var todoColumn = new StackLayout { Spacing = 10 };
             var doneColumn = new StackLayout { Spacing = 10 };
-            todoColumn.Children.Add(new Label { Text = "К выполнению", FontSize = 18, FontAttributes = FontAttributes.Bold });
-            doneColumn.Children.Add(new Label { Text = "Выполнено", FontSize = 18, FontAttributes = FontAttributes.Bold });
+            todoColumn.Children.Add(new Label { Text = "К выполнению", FontSize = 18, FontAttributes = FontAttributes.Bold, TextColor = primary });
+            doneColumn.Children.Add(new Label { Text = "Выполнено", FontSize = 18, FontAttributes = FontAttributes.Bold, TextColor = primary });
             foreach (var task in todoTasks)
                 todoColumn.Children.Add(CreateTaskFrame(task));
             foreach (var task in doneTasks)
@@ -1126,22 +1186,26 @@ namespace Task_Scheduler
 
         private void RenderCalendarView(List<TaskItem> tasks)
         {
+            var isDark = IsDarkTheme();
+            var primary = TextPrimary(isDark);
+            var secondary = TextSecondary(isDark);
+
             var weekStart = DateTime.Today;
             while (weekStart.DayOfWeek != DayOfWeek.Monday)
                 weekStart = weekStart.AddDays(-1);
             var calendarLayout = new StackLayout { Spacing = 15 };
-            var headerLabel = new Label { Text = $"Неделя {weekStart:dd.MM} - {weekStart.AddDays(6):dd.MM}", FontSize = 16, FontAttributes = FontAttributes.Bold };
+            var headerLabel = new Label { Text = $"Неделя {weekStart:dd.MM} - {weekStart.AddDays(6):dd.MM}", FontSize = 16, FontAttributes = FontAttributes.Bold, TextColor = primary };
             calendarLayout.Children.Add(headerLabel);
             for (int i = 0; i < 7; i++)
             {
                 var day = weekStart.AddDays(i);
                 var dayTasks = tasks.Where(t => GetTaskDueDateTime(t)?.Date == day).ToList();
                 var dayLayout = new StackLayout { Spacing = 5 };
-                dayLayout.Children.Add(new Label { Text = $"{day:dddd, dd.MM}", FontSize = 14, FontAttributes = FontAttributes.Bold });
+                dayLayout.Children.Add(new Label { Text = $"{day:dddd, dd.MM}", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = primary });
                 foreach (var task in dayTasks)
                     dayLayout.Children.Add(CreateTaskFrame(task));
                 if (dayTasks.Count == 0)
-                    dayLayout.Children.Add(new Label { Text = "Нет задач", FontSize = 12, TextColor = Colors.Gray });
+                    dayLayout.Children.Add(new Label { Text = "Нет задач", FontSize = 12, TextColor = secondary });
                 calendarLayout.Children.Add(dayLayout);
             }
             TasksContainer.Children.Add(calendarLayout);
@@ -1149,17 +1213,21 @@ namespace Task_Scheduler
 
         private void RenderGanttView(List<TaskItem> tasks)
         {
+            var isDark = IsDarkTheme();
+            var primary = TextPrimary(isDark);
+            var secondary = TextSecondary(isDark);
+
             var ganttLayout = new StackLayout { Spacing = 10 };
             var minDate = tasks.Select(t => GetTaskDueDateTime(t)).Where(d => d.HasValue).Select(d => d!.Value.Date).DefaultIfEmpty(DateTime.Today).Min();
             var maxDate = tasks.Select(t => GetTaskDueDateTime(t)).Where(d => d.HasValue).Select(d => d!.Value.Date).DefaultIfEmpty(DateTime.Today.AddDays(7)).Max();
-            ganttLayout.Children.Add(new Label { Text = $"Период: {minDate:dd.MM} - {maxDate:dd.MM}", FontSize = 14, FontAttributes = FontAttributes.Bold });
+            ganttLayout.Children.Add(new Label { Text = $"Период: {minDate:dd.MM} - {maxDate:dd.MM}", FontSize = 14, FontAttributes = FontAttributes.Bold, TextColor = primary });
             foreach (var task in tasks)
             {
                 var due = GetTaskDueDateTime(task);
                 if (due.HasValue)
                 {
                     var taskRow = new StackLayout { Orientation = StackOrientation.Horizontal, Spacing = 10 };
-                    taskRow.Children.Add(new Label { Text = task.Title, WidthRequest = 150, FontSize = 14 });
+                    taskRow.Children.Add(new Label { Text = task.Title, WidthRequest = 150, FontSize = 14, TextColor = primary });
                     var barFrame = new Frame
                     {
                         BackgroundColor = GetImportanceBgColor(task.Importance),
@@ -1169,7 +1237,7 @@ namespace Task_Scheduler
                         HasShadow = false,
                         HorizontalOptions = LayoutOptions.FillAndExpand
                     };
-                    barFrame.Content = new Label { Text = due.Value.ToString("dd.MM HH:mm"), FontSize = 12 };
+                    barFrame.Content = new Label { Text = due.Value.ToString("dd.MM HH:mm"), FontSize = 12, TextColor = secondary };
                     taskRow.Children.Add(barFrame);
                     ganttLayout.Children.Add(taskRow);
                 }
@@ -1200,8 +1268,13 @@ namespace Task_Scheduler
 
         private Frame CreateTaskFrame(TaskItem task)
         {
+            var isDark = IsDarkTheme();
+            var primary = TextPrimary(isDark);
+            var secondary = TextSecondary(isDark);
+            var accent = TextAccent(isDark);
+
             var borderColor = GetImportanceColor(task.Importance);
-            var bgColor = GetImportanceBgColor(task.Importance);
+            var bgColor = TaskCardBgForImportance(task.Importance, isDark);
             
             // Адаптивные размеры в зависимости от размера окна
             var pageWidth = this.Width;
@@ -1211,7 +1284,7 @@ namespace Task_Scheduler
             
             var frame = new Frame
             {
-                BackgroundColor = task.IsCompleted ? Colors.White : bgColor,
+                BackgroundColor = task.IsCompleted ? TaskCardBgCompleted(isDark) : bgColor,
                 BorderColor = borderColor,
                 CornerRadius = cornerRadius,
                 Padding = padding,
@@ -1228,7 +1301,7 @@ namespace Task_Scheduler
                 Text = task.Title,
                 FontSize = fontSize,
                 FontAttributes = FontAttributes.Bold,
-                TextColor = task.IsCompleted ? Colors.Gray : Colors.Black,
+                TextColor = task.IsCompleted ? secondary : primary,
                 TextDecorations = task.IsCompleted ? TextDecorations.Strikethrough : TextDecorations.None
             };
             mainLayout.Children.Add(titleLabel);
@@ -1241,7 +1314,7 @@ namespace Task_Scheduler
                 {
                     Text = task.Description,
                     FontSize = descFontSize,
-                    TextColor = Colors.Gray,
+                    TextColor = secondary,
                     LineBreakMode = LineBreakMode.WordWrap,
                     TextDecorations = task.IsCompleted ? TextDecorations.Strikethrough : TextDecorations.None
                 };
@@ -1259,7 +1332,7 @@ namespace Task_Scheduler
                     var rangeLabel = new Label
                     {
                         FontSize = dateFontSize,
-                        TextColor = Colors.DarkBlue,
+                        TextColor = accent,
                         LineBreakMode = LineBreakMode.WordWrap
                     };
 
@@ -1326,7 +1399,7 @@ namespace Task_Scheduler
                     {
                         Text = $"📅 {task.DueDate.Value:dd.MM.yyyy}",
                         FontSize = dateFontSize,
-                        TextColor = Colors.DarkBlue
+                        TextColor = accent
                     };
                     dateTimeLayout.Children.Add(dateLabel);
                 }
@@ -1337,7 +1410,7 @@ namespace Task_Scheduler
                     {
                         Text = $"🕐 {task.DueTime.Value:hh\\:mm}",
                         FontSize = dateFontSize,
-                        TextColor = Colors.DarkBlue
+                        TextColor = accent
                     };
                     dateTimeLayout.Children.Add(timeLabel);
                 }
@@ -1357,7 +1430,7 @@ namespace Task_Scheduler
                 };
                 if (!string.IsNullOrEmpty(recurText))
                 {
-                    mainLayout.Children.Add(new Label { Text = recurText, FontSize = 12, TextColor = Colors.DarkBlue });
+                    mainLayout.Children.Add(new Label { Text = recurText, FontSize = 12, TextColor = accent });
                 }
             }
 
@@ -1369,7 +1442,7 @@ namespace Task_Scheduler
                     Text = "Подзадачи:",
                     FontSize = 12,
                     FontAttributes = FontAttributes.Bold,
-                    TextColor = Colors.Gray,
+                    TextColor = secondary,
                     Margin = new Thickness(0, 5, 0, 2)
                 };
                 mainLayout.Children.Add(subTasksHeader);
@@ -1381,13 +1454,14 @@ namespace Task_Scheduler
                     {
                         Text = subTask.IsCompleted ? "☑" : "☐",
                         FontSize = 12,
+                        TextColor = primary,
                         VerticalOptions = LayoutOptions.Center
                     };
                     var subTaskLabel = new Label
                     {
                         Text = subTask.Title,
                         FontSize = 12,
-                        TextColor = Colors.Gray,
+                        TextColor = secondary,
                         VerticalOptions = LayoutOptions.Center,
                         TextDecorations = subTask.IsCompleted ? TextDecorations.Strikethrough : TextDecorations.None
                     };
@@ -1400,7 +1474,10 @@ namespace Task_Scheduler
             // Иконка dot.png для контекстного меню
             var dotImageButton = new ImageButton
             {
-                Source = "dot.png",
+                Source = (Application.Current?.RequestedTheme == AppTheme.Dark ||
+                          Application.Current?.UserAppTheme == AppTheme.Dark)
+                    ? "dotblacktheme.png"
+                    : "dot.png",
                 WidthRequest = 30,
                 HeightRequest = 30,
                 HorizontalOptions = LayoutOptions.End,
@@ -1418,6 +1495,7 @@ namespace Task_Scheduler
             {
                 Text = task.IsCompleted ? "☑" : "☐",
                 FontSize = 18,
+                TextColor = primary,
                 VerticalOptions = LayoutOptions.Center,
                 Margin = new Thickness(0, 0, 10, 0)
             };
@@ -1471,6 +1549,7 @@ namespace Task_Scheduler
                     Padding = new Thickness(12, 8)
                 };
                 var pomodoroTimerLabel = new Label { Text = "25:00", FontSize = 24, FontAttributes = FontAttributes.Bold, IsVisible = false };
+                pomodoroTimerLabel.TextColor = primary;
                 var pomodoroStopButton = new Button { Text = "Остановить", BackgroundColor = Color.FromArgb("#FF5252"), TextColor = Colors.White, CornerRadius = 8, IsVisible = false };
                 pomodoroSection.Children.Add(pomodoroStartButton);
                 pomodoroSection.Children.Add(pomodoroTimerLabel);

@@ -5,7 +5,8 @@
              Title="Профиль">
 
     <ScrollView>
-        <Grid Padding="20">
+        <Grid Padding="20"
+              BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource OffBlack}}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -20,7 +21,7 @@
                          Margin="0,10,0,20">
                 <Grid HorizontalOptions="Center">
                     <Image x:Name="ProfileAvatarImage"
-                           Source="avatar.png"
+                           Source="{AppThemeBinding Light=avatar.png, Dark=avatarblacktheme.png}"
                            WidthRequest="100"
                            HeightRequest="100"
                            MinimumWidthRequest="80"
@@ -50,6 +51,7 @@
                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}">
                 <Label Text="wester"
                        FontSize="15"
+                       TextColor="{AppThemeBinding Light=Black, Dark=White}"
                        HorizontalOptions="Center" />
             </Frame>
 
@@ -67,7 +69,8 @@
                                  Spacing="8">
                         <Label Text="Статистика задач"
                                FontSize="16"
-                               FontAttributes="Bold" />
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light=Black, Dark=White}" />
                         <Label Text="Редактировать"
                                FontSize="13"
                                TextDecorations="Underline"
@@ -83,25 +86,29 @@
                                  Spacing="4"
                                  Margin="0,0,0,8">
                         <Label Text="Линейный график"
-                               FontSize="13">
+                               FontSize="13"
+                               TextColor="{AppThemeBinding Light=Black, Dark=White}">
                             <Label.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnChartOptionTapped" CommandParameter="Line" />
                             </Label.GestureRecognizers>
                         </Label>
                         <Label Text="Кольцевая диаграмма"
-                               FontSize="13">
+                               FontSize="13"
+                               TextColor="{AppThemeBinding Light=Black, Dark=White}">
                             <Label.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnChartOptionTapped" CommandParameter="Donut" />
                             </Label.GestureRecognizers>
                         </Label>
                         <Label Text="Тепловая карта активности"
-                               FontSize="13">
+                               FontSize="13"
+                               TextColor="{AppThemeBinding Light=Black, Dark=White}">
                             <Label.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnChartOptionTapped" CommandParameter="Heatmap" />
                             </Label.GestureRecognizers>
                         </Label>
                         <Label Text="Столбчатая по категориям"
-                               FontSize="13">
+                               FontSize="13"
+                               TextColor="{AppThemeBinding Light=Black, Dark=White}">
                             <Label.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnChartOptionTapped" CommandParameter="Bar" />
                             </Label.GestureRecognizers>
