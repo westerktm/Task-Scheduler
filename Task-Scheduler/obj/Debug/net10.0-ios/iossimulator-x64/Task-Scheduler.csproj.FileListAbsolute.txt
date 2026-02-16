@@ -341,3 +341,13 @@ C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\obj\Debug\net10.0-ios\
 C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\obj\Debug\net10.0-ios\iossimulator-x64\Task-Scheduler.pdb
 C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\obj\Debug\net10.0-ios\iossimulator-x64\Task-Scheduler.genruntimeconfig.cache
 C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\obj\Debug\net10.0-ios\iossimulator-x64\ref\Task-Scheduler.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-ios\iossimulator-x64\H.GeneratedIcons.System.Drawing.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-ios\iossimulator-x64\H.NotifyIcon.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-ios\iossimulator-x64\H.NotifyIcon.Maui.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-ios\iossimulator-x64\Microsoft.Data.Sqlite.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-ios\iossimulator-x64\Microsoft.Win32.SystemEvents.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-ios\iossimulator-x64\SQLitePCLRaw.lib.e_sqlite3.ios.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-ios\iossimulator-x64\SQLitePCLRaw.provider.internal.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-ios\iossimulator-x64\System.Drawing.Common.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-ios\iossimulator-x64\System.Private.Windows.Core.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-ios\iossimulator-x64\System.Private.Windows.GdiPlus.dll

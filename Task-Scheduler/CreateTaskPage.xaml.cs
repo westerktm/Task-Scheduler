@@ -210,10 +210,17 @@ namespace Task_Scheduler
 
             foreach (var subTask in _subTasks)
             {
+                var isDark = Application.Current?.RequestedTheme == AppTheme.Dark ||
+                             Application.Current?.UserAppTheme == AppTheme.Dark;
+
+                var frameBg = isDark ? Color.FromArgb("#1E1E1E") : Colors.White;
+                var frameBorder = isDark ? Color.FromArgb("#444444") : Colors.LightGray;
+                var textColor = isDark ? Colors.White : Colors.Black;
+
                 var subTaskFrame = new Frame
                 {
-                    BackgroundColor = Colors.White,
-                    BorderColor = Colors.LightGray,
+                    BackgroundColor = frameBg,
+                    BorderColor = frameBorder,
                     CornerRadius = 5,
                     Padding = 10,
                     Margin = new Thickness(0, 0, 0, 5),
@@ -225,6 +232,7 @@ namespace Task_Scheduler
                 var subTaskLabel = new Label
                 {
                     Text = subTask.Title,
+                    TextColor = textColor,
                     VerticalOptions = LayoutOptions.Center,
                     HorizontalOptions = LayoutOptions.StartAndExpand
                 };

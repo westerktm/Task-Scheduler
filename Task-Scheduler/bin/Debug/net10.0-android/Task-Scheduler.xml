@@ -13,6 +13,12 @@
         <member name="P:Task_Scheduler.Models.TaskItem.UserId">
             <summary>Связь с пользователем, которому принадлежит задача.</summary>
         </member>
+        <member name="P:Task_Scheduler.Models.TaskItem.SubTasks">
+            <summary>
+            Список подзадач хранится только в памяти и не маппится напрямую в таблицу SQLite.
+            При необходимости его можно вынести в отдельную таблицу.
+            </summary>
+        </member>
         <member name="T:Task_Scheduler.Models.User">
             <summary>Пользователь приложения.</summary>
         </member>
@@ -48,6 +54,12 @@
             <summary>
             Простая авторизация: регистрация пользователя и вход по логину/паролю.
             </summary>
+        </member>
+        <member name="M:Task_Scheduler.Services.AuthService.LoginAsGuestAsync">
+            <summary>Вход как гость (создаёт/использует пользователя guest).</summary>
+        </member>
+        <member name="M:Task_Scheduler.Services.AuthService.DeleteCurrentUserAsync">
+            <summary>Удаляет текущего пользователя и все его задачи.</summary>
         </member>
         <member name="T:Task_Scheduler.Services.DatabaseService">
             <summary>

@@ -1,3 +1,5 @@
+using SQLite;
+
 namespace Task_Scheduler.Models
 {
     /// <summary>Уровень важности задачи</summary>
@@ -19,6 +21,7 @@ namespace Task_Scheduler.Models
 
     public class TaskItem
     {
+        [PrimaryKey]
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
         /// <summary>Связь с пользователем, которому принадлежит задача.</summary>
@@ -56,15 +59,22 @@ namespace Task_Scheduler.Models
         /// Список подзадач хранится только в памяти и не маппится напрямую в таблицу SQLite.
         /// При необходимости его можно вынести в отдельную таблицу.
         /// </summary>
-        [SQLite.Ignore]
+        [Ignore]
         public List<SubTask> SubTasks { get; set; } = new List<SubTask>();
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime LastUpdated { get; set; } = DateTime.Now;
     }
 
+    [Table("SubTasks")]
     public class SubTask
     {
+        [PrimaryKey]
         public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        /// <summary>Внешний ключ на задачу.</summary>
+        [Indexed]
+        public string TaskId { get; set; } = string.Empty;
+
         public string Title { get; set; } = string.Empty;
         public bool IsCompleted { get; set; } = false;
     }

@@ -1,4 +1,4 @@
-<api type="debug" assembly-name="Task-Scheduler" mvid="da0d0c8f5d804e238474461d61e6618a">
+<api type="debug" assembly-name="Task-Scheduler" mvid="0315af35296e415d9ee58795f3155124">
   <java-to-managed>
     <entry java-name="crc64abd19c7ba1be253f/MainActivity" managed-name="Task_Scheduler.MainActivity, Task-Scheduler" managed-type-token-id="33554443" />
     <entry java-name="crc64abd19c7ba1be253f/MainApplication" managed-name="Task_Scheduler.MainApplication, Task-Scheduler" managed-type-token-id="33554444" />

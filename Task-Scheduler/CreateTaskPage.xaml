@@ -263,8 +263,8 @@
 
                 <Button Text="+ Добавить подзадачу"
                         Clicked="OnAddSubTaskClicked"
-                        BackgroundColor="#E0E0E0"
-                        TextColor="#333333"
+                        BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark={StaticResource OffBlack}}"
+                        TextColor="{AppThemeBinding Light=#333333, Dark=White}"
                         CornerRadius="8"
                         Padding="15,8"
                         Margin="0,10,0,10"

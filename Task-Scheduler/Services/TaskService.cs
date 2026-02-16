@@ -49,6 +49,17 @@ namespace Task_Scheduler.Services
                     .ToListAsync()
                     .GetAwaiter()
                     .GetResult();
+
+                // Подгружаем подзадачи для каждой задачи
+                foreach (var task in tasks)
+                {
+                    var subTasks = conn.Table<SubTask>()
+                        .Where(s => s.TaskId == task.Id)
+                        .ToListAsync()
+                        .GetAwaiter()
+                        .GetResult();
+                    task.SubTasks = subTasks;
+                }
                 return tasks;
             }
             catch
@@ -69,6 +80,17 @@ namespace Task_Scheduler.Services
 
             var conn = _databaseService.ConnectionAsync().GetAwaiter().GetResult();
             conn.InsertAsync(task).GetAwaiter().GetResult();
+
+            // Сохраняем подзадачи, если они есть
+            if (task.SubTasks != null && task.SubTasks.Count > 0)
+            {
+                foreach (var sub in task.SubTasks)
+                {
+                    sub.TaskId = task.Id;
+                }
+
+                conn.InsertAllAsync(task.SubTasks).GetAwaiter().GetResult();
+            }
         }
 
         public void UpdateTask(TaskItem task)
@@ -81,7 +103,26 @@ namespace Task_Scheduler.Services
             task.LastUpdated = DateTime.Now;
 
             var conn = _databaseService.ConnectionAsync().GetAwaiter().GetResult();
+
+            // Обновляем саму задачу
             conn.UpdateAsync(task).GetAwaiter().GetResult();
+
+            // Перезаписываем подзадачи: удаляем старые и добавляем текущие
+            conn.Table<SubTask>()
+                .Where(s => s.TaskId == task.Id)
+                .DeleteAsync()
+                .GetAwaiter()
+                .GetResult();
+
+            if (task.SubTasks != null && task.SubTasks.Count > 0)
+            {
+                foreach (var sub in task.SubTasks)
+                {
+                    sub.TaskId = task.Id;
+                }
+
+                conn.InsertAllAsync(task.SubTasks).GetAwaiter().GetResult();
+            }
         }
 
         public void DeleteTask(string taskId)
@@ -98,6 +139,14 @@ namespace Task_Scheduler.Services
 
             if (task != null)
             {
+                // Удаляем подзадачи
+                conn.Table<SubTask>()
+                    .Where(s => s.TaskId == task.Id)
+                    .DeleteAsync()
+                    .GetAwaiter()
+                    .GetResult();
+
+                // Удаляем саму задачу
                 conn.DeleteAsync(task).GetAwaiter().GetResult();
             }
         }

@@ -44,6 +44,7 @@ namespace Task_Scheduler.Services
             // Создаём таблицы при первом обращении
             await _connection.CreateTableAsync<User>();
             await _connection.CreateTableAsync<TaskItem>();
+            await _connection.CreateTableAsync<SubTask>();
 
             return _connection;
         }

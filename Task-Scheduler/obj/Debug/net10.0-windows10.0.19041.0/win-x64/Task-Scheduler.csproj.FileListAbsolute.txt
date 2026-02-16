@@ -562,3 +562,8 @@ C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-wind
 C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-windows10.0.19041.0\win-x64\SQLitePCLRaw.provider.e_sqlite3.dll
 C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-windows10.0.19041.0\win-x64\e_sqlite3.dll
 C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-windows10.0.19041.0\win-x64\Microsoft.Data.Sqlite.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-windows10.0.19041.0\win-x64\H.GeneratedIcons.System.Drawing.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-windows10.0.19041.0\win-x64\H.NotifyIcon.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-windows10.0.19041.0\win-x64\H.NotifyIcon.Maui.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-windows10.0.19041.0\win-x64\System.Private.Windows.Core.dll
+C:\Users\maksi\source\repos\Task-Scheduler\Task-Scheduler\bin\Debug\net10.0-windows10.0.19041.0\win-x64\System.Private.Windows.GdiPlus.dll
